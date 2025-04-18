@@ -1,7 +1,8 @@
 'use client'; // Monaco Editor needs to run client-side
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Editor, { OnChange, OnMount } from '@monaco-editor/react';
+import type * as monaco from 'monaco-editor/esm/vs/editor/editor.api'; // Import Monaco editor types
 
 interface CodeEditorProps {
   initialCode: string;
@@ -19,6 +20,7 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
   height = '400px',
 }) => {
   const [code, setCode] = useState(initialCode);
+  const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null); // Use imported monaco namespace
 
   // Update internal state if initialCode prop changes (e.g., navigating challenges)
   useEffect(() => {
@@ -32,7 +34,9 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
     }
   };
 
-  const handleEditorDidMount: OnMount = (_editor, _monaco) => {
+  // Use imported monaco namespace for types
+  const handleEditorDidMount: OnMount = (_editor: monaco.editor.IStandaloneCodeEditor, _monacoInstance: typeof monaco) => {
+    editorRef.current = _editor;
     // You can add custom editor configurations or actions here if needed
     // For example, register Solidity language specifics if not built-in
     // monaco.languages.register({ id: 'solidity' });

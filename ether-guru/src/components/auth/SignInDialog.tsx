@@ -3,12 +3,9 @@ import React from "react";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
 import AuthForm from "./AuthForm";
-import { Button } from "../ui/button"; // Assuming button is used as trigger
 
 interface SignInDialogProps {
     children: React.ReactNode; // To wrap the trigger element

@@ -43,6 +43,13 @@ export default function ChallengeDisplay({ slug }: ChallengeDisplayProps) {
     score: number | null;
     feedback: string | null;
   }>({ score: null, feedback: null });
+
+  // Reset hints if the challenge (slug) prop changes - Moved up to fix hook rule
+  useEffect(() => {
+    setRevealedHintContentIndices(new Set()); // Also reset revealed content indices
+    // if (challenge) setCode(challenge.vulnerableCode); // If using editor
+  }, [slug]); // Depend on slug, as challenge might be undefined initially
+
   // Fetch challenge data based on slug
   const challenge = getChallengeBySlug(slug);
 
@@ -52,27 +59,21 @@ export default function ChallengeDisplay({ slug }: ChallengeDisplayProps) {
     return <div>Challenge not found for slug: {slug}</div>;
   }
 
-  // Helper function for sidebar hover styles (Re-added based on user feedback)
-  const getSidebarHoverStyle = (difficulty: string | undefined) => {
-    switch (difficulty?.toLowerCase()) {
-      case "easy":
-        return "hover:bg-slate-100 dark:hover:bg-slate-800";
-      case "medium":
-        return "hover:bg-slate-200 dark:hover:bg-slate-700";
-      case "hard":
-        return "hover:bg-slate-300 dark:hover:bg-slate-600";
-      case "insane":
-        return "hover:bg-slate-400 dark:hover:bg-slate-500";
-      default:
-        return "hover:bg-slate-100 dark:hover:bg-slate-800";
-    }
-  };
-
-  // Reset hints if the challenge (slug) prop changes
-  useEffect(() => {
-    setRevealedHintContentIndices(new Set()); // Also reset revealed content indices
-    // if (challenge) setCode(challenge.vulnerableCode); // If using editor
-  }, [challenge]); // Depend on the fetched challenge object
+  // // Helper function for sidebar hover styles (Commented out - unused in this component)
+  // const getSidebarHoverStyle = (difficulty: string | undefined) => {
+  //   switch (difficulty?.toLowerCase()) {
+  //     case "easy":
+  //       return "hover:bg-slate-100 dark:hover:bg-slate-800";
+  //     case "medium":
+  //       return "hover:bg-slate-200 dark:hover:bg-slate-700";
+  //     case "hard":
+  //       return "hover:bg-slate-300 dark:hover:bg-slate-600";
+  //     case "insane":
+  //       return "hover:bg-slate-400 dark:hover:bg-slate-500";
+  //     default:
+  //       return "hover:bg-slate-100 dark:hover:bg-slate-800";
+  //   }
+  // };
 
   const handleSubmitExplanation = async () => {
     setIsSubmitting(true);

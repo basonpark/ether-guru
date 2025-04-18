@@ -4,14 +4,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react"; // Import useState
-import { challenges } from "@/lib/challenges"; // Import the full challenges array
-
-// Define the type for the slugs array elements
-interface ChallengeSlug {
-  // Commenting out as we'll use the imported Challenge type
-  //    slug: string;
-  //    name: string;
-}
+import { challenges, Challenge } from "@/lib/challenges"; // Import the full challenges array
+import { cn } from "@/lib/utils";
 
 export default function Sidebar() {
   // Using the full challenges array directly
