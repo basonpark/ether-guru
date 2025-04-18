@@ -35,8 +35,8 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
   };
 
   // Use imported monaco namespace for types
-  const handleEditorDidMount: OnMount = (_editor: monaco.editor.IStandaloneCodeEditor, _monacoInstance: typeof monaco) => {
-    editorRef.current = _editor;
+  const handleEditorDidMount: OnMount = (editor: monaco.editor.IStandaloneCodeEditor, _monacoInstance: typeof monaco) => {
+    editorRef.current = editor;
     // You can add custom editor configurations or actions here if needed
     // For example, register Solidity language specifics if not built-in
     // monaco.languages.register({ id: 'solidity' });

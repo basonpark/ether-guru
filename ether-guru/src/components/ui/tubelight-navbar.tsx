@@ -19,11 +19,9 @@ interface NavBarProps {
 
 export function NavBar({ items, className }: NavBarProps) {
   const [activeTab, setActiveTab] = useState(items[0].name)
-  // const [isMobile, setIsMobile] = useState(false)
 
   useEffect(() => {
     const handleResize = () => {
-      // setIsMobile(window.innerWidth < 768)
     }
 
     handleResize()
@@ -34,13 +32,11 @@ export function NavBar({ items, className }: NavBarProps) {
   return (
     <div
       className={cn(
-        // Removed fixed positioning classes: "fixed bottom-0 sm:top-0 left-1/2 -translate-x-1/2 z-50 mb-6 sm:pt-6",
-        // The parent element (header in layout.tsx) will now control positioning.
-        "flex justify-center", // Added flex justify-center as a basic replacement
+        "flex justify-center",
         className,
       )}
     >
-      <div className="flex items-center gap-4 bg-background/5 border border-border backdrop-blur-lg py-1 px-1 rounded-full shadow-lg"> {/* Increased gap */} 
+      <div className="flex items-center gap-4 bg-background/5 border border-border backdrop-blur-lg py-1 px-1 rounded-full shadow-lg"> 
         {items.map((item) => {
           const Icon = item.icon
           const isActive = activeTab === item.name

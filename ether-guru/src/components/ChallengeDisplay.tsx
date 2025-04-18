@@ -59,22 +59,6 @@ export default function ChallengeDisplay({ slug }: ChallengeDisplayProps) {
     return <div>Challenge not found for slug: {slug}</div>;
   }
 
-  // // Helper function for sidebar hover styles (Commented out - unused in this component)
-  // const getSidebarHoverStyle = (difficulty: string | undefined) => {
-  //   switch (difficulty?.toLowerCase()) {
-  //     case "easy":
-  //       return "hover:bg-slate-100 dark:hover:bg-slate-800";
-  //     case "medium":
-  //       return "hover:bg-slate-200 dark:hover:bg-slate-700";
-  //     case "hard":
-  //       return "hover:bg-slate-300 dark:hover:bg-slate-600";
-  //     case "insane":
-  //       return "hover:bg-slate-400 dark:hover:bg-slate-500";
-  //     default:
-  //       return "hover:bg-slate-100 dark:hover:bg-slate-800";
-  //   }
-  // };
-
   const handleSubmitExplanation = async () => {
     setIsSubmitting(true);
     setEvaluationResult({ score: null, feedback: null }); // Clear previous results
