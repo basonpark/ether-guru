@@ -3,7 +3,8 @@ import { Inter as FontSans } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import Sidebar from "@/components/Sidebar";
-import Navbar from "@/components/Navbar";
+import Link from "next/link"; 
+import DesktopNavBarWrapper from "@/components/ui/DesktopNavBarWrapper"; 
 
 const fontSans = FontSans({
   subsets: ["latin"],
@@ -25,14 +26,23 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body
         className={cn(
-          "min-h-screen bg-background font-sans antialiased",
+          "min-h-screen bg-background font-sans antialiased flex flex-col",
           fontSans.variable
         )}
       >
-        <Navbar />
-        <div className="flex">
+        {/* Header section */}
+        <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <div className="container flex h-16 items-center justify-between"> 
+            {/* Render NavBar Wrapper (will include EtherGuru link now) */}
+            <div className="flex flex-1 items-center justify-center">
+              <DesktopNavBarWrapper />
+            </div>
+          </div>
+        </header>
+
+        <div className="flex flex-1"> 
           <Sidebar />
-          <main className="flex-1 overflow-auto">{children}</main>
+          <main className="flex-1 overflow-y-auto">{children}</main>
         </div>
       </body>
     </html>

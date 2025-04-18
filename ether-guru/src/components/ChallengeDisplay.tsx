@@ -142,11 +142,8 @@ export default function ChallengeDisplay({ slug }: ChallengeDisplayProps) {
   };
 
   return (
-    <div className="flex h-[calc(100vh-var(--header-height))] overflow-hidden">
-      {" "}
-      {/* Main flex container */}
-      {/* Main Content Section - Add gradient and padding */}
-      <main className="flex-1 overflow-y-auto p-6 md:p-8 bg-gradient-to-br from-slate-100 to-slate-300 dark:from-slate-950 dark:to-slate-900">
+    <div className="h-full overflow-y-auto p-6 md:p-8 bg-gradient-to-br from-slate-100 to-slate-400 dark:from-slate-950 dark:to-slate-900">
+        {/* This div is now the main scrollable content area with the background */}
         {/* Challenge Header with Icon */}
         <div className="flex items-center mb-6">
           {challenge.icon && (
@@ -258,9 +255,7 @@ export default function ChallengeDisplay({ slug }: ChallengeDisplayProps) {
               <Lightbulb className="h-5 w-5 mr-2 text-yellow-500" />
               Hints ({challenge.hints.length})
             </CardTitle>
-            <CardDescription>
-              Need a little help? Reveal hints individually.
-            </CardDescription>
+            <CardDescription>Just a little peak</CardDescription>
           </CardHeader>
           <CardContent>
             {challenge.hints.length > 0 ? (
@@ -282,7 +277,7 @@ export default function ChallengeDisplay({ slug }: ChallengeDisplayProps) {
                       </CardHeader>
                       <CardContent className="flex-grow flex flex-col justify-center items-center pt-0">
                         {revealedHintContentIndices.has(index) ? (
-                          <p className="text-sm text-slate-700 dark:text-slate-300 py-2 w-full break-words text-center">
+                          <p className="text-sm font-semibold text-slate-700 dark:text-slate-300 py-2 w-full break-words text-left">
                             {hint}
                           </p>
                         ) : (
@@ -320,9 +315,7 @@ export default function ChallengeDisplay({ slug }: ChallengeDisplayProps) {
               <BookOpen className="h-5 w-5 mr-2 text-blue-500" />
               Explanation
             </CardTitle>
-            <CardDescription>
-              Understand the concepts behind the vulnerability.
-            </CardDescription>
+            <CardDescription>Discomfort = Learning</CardDescription>
           </CardHeader>
           <CardContent>
             <Accordion type="single" collapsible className="w-full">
@@ -357,7 +350,6 @@ export default function ChallengeDisplay({ slug }: ChallengeDisplayProps) {
         <div className="flex justify-between mt-8">
           {/* Navigation buttons will go here */}
         </div>
-      </main>
     </div>
   );
 }

@@ -50,6 +50,7 @@
 
 :root {
   --radius: 0.625rem;
+  --header-height: 4rem; /* Define header height (h-16 = 4rem) */
   --background: oklch(1 0 0);
   --foreground: oklch(0.147 0.004 49.25);
   --card: oklch(1 0 0);
@@ -123,6 +124,10 @@
 }
 
 @layer base {
+  html,
+  body {
+    @apply h-full;
+  }
   * {
     @apply border-border outline-ring/50;
   }
