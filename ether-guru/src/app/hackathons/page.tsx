@@ -1,4 +1,4 @@
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import Link from 'next/link';
 import { ExternalLink, Trophy, ShieldCheck } from 'lucide-react';
 

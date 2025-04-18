@@ -1,5 +1,5 @@
 import React from 'react';
-import { challenges, getChallengeBySlug, Challenge } from "@/lib/challenges";
+import { challenges, getChallengeBySlug } from "@/lib/challenges";
 import { notFound } from "next/navigation";
 import ChallengeDisplay from "@/components/ChallengeDisplay"; // Import the new client component
 

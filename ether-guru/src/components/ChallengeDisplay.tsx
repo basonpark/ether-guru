@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Challenge, challenges, getChallengeBySlug } from "@/lib/challenges"; // Import challenges array and getChallengeBySlug
+import { getChallengeBySlug } from "@/lib/challenges"; // Removed unused Challenge type and challenges array
 import ReactMarkdown, { Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
@@ -52,7 +52,7 @@ export default function ChallengeDisplay({ slug }: ChallengeDisplayProps) {
     return <div>Challenge not found for slug: {slug}</div>;
   }
 
-  // Helper function for sidebar hover styles
+  // Helper function for sidebar hover styles (Re-added based on user feedback)
   const getSidebarHoverStyle = (difficulty: string | undefined) => {
     switch (difficulty?.toLowerCase()) {
       case "easy":
@@ -124,10 +124,9 @@ export default function ChallengeDisplay({ slug }: ChallengeDisplayProps) {
       props: React.PropsWithChildren<{
         inline?: boolean;
         className?: string;
-        node?: any;
       }>
     ) {
-      const { node, inline, className, children, ...rest } = props;
+      const { inline, className, children, ...rest } = props;
       const match = /language-(\w+)/.exec(className || "");
       return !inline && match ? (
         <SyntaxHighlighter style={vscDarkPlus} language={match[1]} PreTag="div">

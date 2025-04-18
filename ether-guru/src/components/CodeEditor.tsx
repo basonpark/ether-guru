@@ -32,7 +32,7 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
     }
   };
 
-  const handleEditorDidMount: OnMount = (editor, monaco) => {
+  const handleEditorDidMount: OnMount = (_editor, _monaco) => {
     // You can add custom editor configurations or actions here if needed
     // For example, register Solidity language specifics if not built-in
     // monaco.languages.register({ id: 'solidity' });

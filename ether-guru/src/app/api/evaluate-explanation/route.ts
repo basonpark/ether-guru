@@ -112,12 +112,7 @@ Rules for Evaluation:
 
   } catch (error) {
     console.error("Error in /api/evaluate-explanation:", error);
-    let errorMessage = "An unexpected error occurred during evaluation.";
-    if (error instanceof Error) {
-      errorMessage = error.message;
-    }
-    // Provide a generic error response to the client
-    return NextResponse.json({ error: "Failed to evaluate explanation. Please try again later." }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to evaluate explanation. Please try again later.' }, { status: 500 });
   }
 }
 
