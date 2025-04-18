@@ -130,3 +130,51 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Custom Scrollbar Styling for Code Snippets */
+.code-scrollbar-wrapper::-webkit-scrollbar {
+  width: 8px; /* Width of the scrollbar */
+}
+
+.code-scrollbar-wrapper::-webkit-scrollbar-track {
+  background: #f1f1f1; /* Light gray track */
+  border-radius: 10px;
+}
+.dark .code-scrollbar-wrapper::-webkit-scrollbar-track {
+  background: #2d3748; /* Darker gray track for dark mode */
+}
+
+.code-scrollbar-wrapper::-webkit-scrollbar-thumb {
+  background: #c1c1c1; /* Slightly darker gray thumb */
+  border-radius: 10px;
+}
+.dark .code-scrollbar-wrapper::-webkit-scrollbar-thumb {
+  background: #718096; /* Lighter gray thumb for dark mode */
+}
+
+.code-scrollbar-wrapper::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8; /* Darker thumb on hover */
+}
+.dark .code-scrollbar-wrapper::-webkit-scrollbar-thumb:hover {
+  background: #a0aec0; /* Slightly lighter thumb on hover for dark mode */
+}
+
+/* Firefox Scrollbar Styling */
+.code-scrollbar-wrapper {
+  scrollbar-width: thin; /* "auto" or "thin" */
+  scrollbar-color: #c1c1c1 #f1f1f1; /* thumb track */
+}
+.dark .code-scrollbar-wrapper {
+  scrollbar-color: #718096 #2d3748; /* thumb track for dark mode */
+}
+
+/* Rainbow Button Animation */
+@keyframes rainbow {
+  100%,
+  0% {
+    background-position: 0 0;
+  }
+  50% {
+    background-position: 100% 0;
+  }
+}
