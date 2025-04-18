@@ -863,7 +863,7 @@ This challenge requires bypassing three modifiers (gates) in a single call to th
 
 **Gate Two: \`require(gasleft() % 8191 == 0);\`**
 *   **Vulnerability:** Requires the gas remaining at the point this modifier is executed to be an exact multiple of 8191. Gas consumption is complex and depends on the EVM opcodes executed, compiler optimizations, and the gas provided to the call.
-*   **Attack:** This is the trickiest gate. You need to call the \`enter\` function from your attacker contract with a carefully calculated amount of gas. You must determine the exact gas consumed *before* the \`gasleft()\` check in \`gateTwo\` is performed. Then, you need to find a total gas amount \`G\` to send with the transaction such that \[(G - gas_consumed_before_gateTwo) % 8191 == 0\](cci:1://file:///Users/basonpark/Desktop/ether-guru/ether-guru/src/app/page.tsx:4:0-40:1).
+*   **Attack:** This is the trickiest gate. You need to call the \`enter\` function from your attacker contract with a carefully calculated amount of gas. You must determine the exact gas consumed *before* the \`gasleft()\` check in \`gateTwo\` is performed. Then, you need to find a total gas amount \`G\` to send with the transaction such that \[(G - gas_consumed_before_gateTwo) % 8191 == 0\]
     *   This often involves trial and error ("gas golfing"). You can use tools like Remix debugger or Foundry's debugger/tracing to step through execution and observe gas usage.
     *   You'll likely need a loop within your attacker contract's calling function. The external call to \`enter\` will be made within this loop. You iterate through different gas values supplied to the external call until the \`gasleft()\` check passes.
     *   The formula is approximately: \`gas_to_forward = base_gas_needed + (8191 * i) + buffer\`, where \`base_gas_needed\` is an estimate, \`i\` is your loop counter, and \`buffer\` accounts for gas used by the loop itself and the call setup. You then call the target \`enter\` function with \`gas: gas_to_forward\`.
@@ -872,9 +872,8 @@ This challenge requires bypassing three modifiers (gates) in a single call to th
 *   **Vulnerability:** This gate performs complex type casting and comparisons on the input \`_gateKey\` and \`tx.origin\`.
     *   \`bytes8\` is equivalent to \`uint64\`.
     *   The checks essentially require:
-        1.  The upper 32 bits of the \`_gateKey\` must be zero (\`uint32(key) == uint16(key)\` implies the upper 16 bits of the lower 32 bits are zero, and if the *next* check passes, it confirms the higher 32 bits are also zero). Let \`key = uint64(_gateKey)\`. Check 1: \[(key & 0xFFFFFFFF0000FFFF) == 0\](cci:1://file:///Users/basonpark/Desktop/ether-guru/ether-guru/src/app/page.tsx:4:0-40:1). Simplified: lower 32 bits == lower 16 bits.
-        2.  The full 64-bit \`_gateKey\` must *not* be equal to its lower 32 bits (meaning some bits in the higher 32 bits must be set, contradicting the implication from check 1 if check 3 passes?). Check 2: \`uint32(key) != key\`. Simplified: key must have non-zero bits in its upper 32 bits.
-        3.  The lower 32 bits of the \`_gateKey\` must be equal to the lower 16 bits of the \`tx.origin\` address. Check 3: \`uint32(key) == uint16(uint64(uint160(tx.origin)))\`. Simplified: lower 32 bits == lower 16 bits of tx.origin.
+        1.  The full 64-bit \`_gateKey\` must *not* be equal to its lower 32 bits (meaning some bits in the higher 32 bits must be set, contradicting the implication from check 1 if check 3 passes?). Check 2: \`uint32(key) != key\`. Simplified: key must have non-zero bits in its upper 32 bits.
+        2.  The lower 32 bits of the \`_gateKey\` must be equal to the lower 16 bits of the \`tx.origin\` address. Check 3: \`uint32(key) == uint16(uint64(uint160(tx.origin)))\`. Simplified: lower 32 bits == lower 16 bits of tx.origin.
 
 *   **Attack:**
     1.  You need to construct a \`bytes8\` (\`uint64\`) key that satisfies these conditions based on *your* EOA address (\`tx.origin\`).
@@ -1713,17 +1712,14 @@ contract Denial is Ownable {
 }
 `,
     hints: [
-      'The [withdraw](cci:1://file:///Users/basonpark/Desktop/ether-guru/ether-guru/src/lib/challenges.ts:1:4-3:5) function sends the entire contract balance to a `partner` address using a low-level `.call{value: amount}("")`.',
       'The `partner` address can be set by anyone via `setWithdrawPartner`.',
       'What happens if the `partner` is a contract?',
       'What happens during an Ether transfer via `.call` if the recipient is a contract?',
       'The recipient contract\'s `receive()` or `fallback()` function is executed.',
       'What if the `partner` contract\'s `receive()` or `fallback()` function consumes a lot of gas or always reverts?',
       'Can you create a contract that acts as a gas sink or always reverts upon receiving Ether?',
-      'Set this malicious contract as the `partner`.',
     ],
     explanation: `### Vulnerability
-The contract allows anyone to set a \`partner\` address. The \`withdraw\` function, intended for the owner to retrieve funds, sends the *entire* contract balance to this \`partner\` address using a low-level call: \[(bool sent, ) = partner.call{value: amount}("");\](cci:1://file:///Users/basonpark/Desktop/ether-guru/ether-guru/src/lib/challenges.ts:1:4-3:5).
 
 If the \`partner\` address points to a smart contract, this low-level call will trigger the execution of the partner contract's \`receive()\` function (if it exists and the call has no data) or its \`fallback()\` function (if \`receive()\` doesn't exist or the call has data, though here it's empty).
 
@@ -1777,7 +1773,6 @@ Since anyone can call \`setWithdrawPartner\`, an attacker can set their maliciou
     *   The \`Denial\` contract executes \`partner.call{value: amount}("")\`.
     *   This calls the \`fallback\` function of your \`DenialAttacker\` contract.
     *   Your attacker contract's fallback reverts (or runs out of gas).
-    *   The \[(sent, )\](cci:1://file:///Users/basonpark/Desktop/ether-guru/ether-guru/src/lib/challenges.ts:1:4-3:5) returned by \`.call\` becomes \[(false, )](cci:1://file:///Users/basonpark/Desktop/ether-guru/ether-guru/src/lib/challenges.ts:1:4-3:5).
     *   The \`require(sent, "Withdrawal failed");\` line in \`Denial\` causes the entire \`withdraw\` transaction to revert.
 5.  **Result**: The owner is permanently denied access to the funds via the \`withdraw\` function as long as the malicious contract is set as the partner.
 
@@ -1992,13 +1987,13 @@ An attacker can manipulate this price by performing swaps that significantly alt
 1.  **Approve Dex**: Approve the Dex contract to spend your initial balances of Token 1 and Token 2.
 2.  **Check Balances**: Note the initial balances: You (10 T1, 10 T2), Dex (100 T1, 100 T2).
 3.  **Swap 1 (T1 -> T2)**: Swap all your Token 1 (10) for Token 2.
-    *   Price: \[(10 * BalT2) / BalT1 = (10 * 100) / 100 = 10\](cci:2://file:///Users/basonpark/Desktop/ether-guru/ether-guru/src/lib/challenges.ts:2:0-20:1). You get 10 T2.
+    *   Price: \[(10 * BalT2) / BalT1 = (10 * 100) / 100 = 10\]. You get 10 T2.
     *   Balances: You (0 T1, 20 T2), Dex (110 T1, 90 T2).
 4.  **Swap 2 (T2 -> T1)**: Swap all your Token 2 (20) for Token 1.
-    *   Price: \[(20 * BalT1) / BalT2 = (20 * 110) / 90 = 24\](cci:2://file:///Users/basonpark/Desktop/ether-guru/ether-guru/src/lib/challenges.ts:2:0-20:1) (approx, integer math). You get 24 T1.
+    *   Price: \[(20 * BalT1) / BalT2 = (20 * 110) / 90 = 24\] (approx, integer math). You get 24 T1.
     *   Balances: You (24 T1, 0 T2), Dex (86 T1, 110 T2).
 5.  **Swap 3 (T1 -> T2)**: Swap all your Token 1 (24) for Token 2.
-    *   Price: \[(24 * BalT2) / BalT1 = (24 * 110) / 86 = 30\](cci:2://file:///Users/basonpark/Desktop/ether-guru/ether-guru/src/lib/challenges.ts:2:0-20:1) (approx). You get 30 T2.
+    *   Price: \[(24 * BalT2) / BalT1 = (24 * 110) / 86 = 30\] (approx). You get 30 T2.
     *   Balances: You (0 T1, 30 T2), Dex (110 T1, 80 T2).
 6.  **Continue Swapping**: Repeat this process. Each swap makes the next one more favorable because the balance ratio becomes increasingly skewed.
 7.  **Drain**: Eventually, one token balance in the Dex will be very low. Perform a final large swap to drain almost all of it. For example, if Dex has (110 T1, ~0 T2), swap a tiny amount of T1 to get all remaining T2. Then, swap T2 to drain T1. The exact numbers depend on integer truncation during \`getSwapPrice\`.
@@ -2055,7 +2050,6 @@ contract DexTwo {
 // that the attacker controls fully.
 `,
     hints: [
-      'The price calculation in `getSwapAmount` is different: [(amount * balance_from) / balance_to](cci:2://file:///Users/basonpark/Desktop/ether-guru/ether-guru/src/lib/challenges.ts:2:0-20:1).',
       'Can you introduce a *new* token into the system?',
       'What if you created your own ERC20 token and approved the Dex to use it?',
       'Could you swap your custom token for Token 1 or Token 2?',
@@ -2069,8 +2063,6 @@ Because the \`swap\` function takes arbitrary \`from\` and \`to\` addresses, an 
 2.  Approve the DexTwo contract to spend their \`EvilToken\`.
 3.  Call \`swap\` with \`from = EvilToken address\`, \`to = token1 address\`.
 
-When \`getSwapAmount(EvilToken, token1, amount)\` is called, the Dex has a balance of 0 for \`EvilToken\`, but the formula uses \`balance_from\` in the *numerator*. Oh wait, the code comment says \`balance_from\` in numerator, but the implementation shows \`balanceOf(from)\` in numerator. Let's assume the implementation is correct: \[(amount * IERC20(from).balanceOf(address(this))).div(IERC20(to).balanceOf(address(this)))\](cci:2://file:///Users/basonpark/Desktop/ether-guru/ether-guru/src/lib/challenges.ts:2:0-20:1).
-
 If \`from\` is \`EvilToken\`, \`IERC20(from).balanceOf(address(this))\` will likely be 0 initially (unless the attacker transfers some \`EvilToken\` to the Dex first). If the balance is 0, the \`swapAmount\` calculated will be 0. This isn't helpful.
 
 Let's reconsider the Ethernaut level's typical setup. The vulnerability often hinges on the *order* of operations or missing checks. The check \`require(IERC20(from).transferFrom(msg.sender, address(this), amount))\` happens *before* the price calculation.
@@ -2083,11 +2075,11 @@ Alternative approach: What if we swap a *small* amount of our fake token *into* 
 3.  **Seed Dex with EvilToken**: Transfer a small amount of \`EvilToken\` directly to the DexTwo contract address (e.g., 1 \`EvilToken\`). Now \`IERC20(EvilToken).balanceOf(DexTwo address)\` is 1.
 4.  **Swap EvilToken -> Token 1**: Call \`swap(EvilToken address, token1 address, 100)\`.
     *   \`transferFrom\` moves 100 \`EvilToken\` from you to Dex. Dex \`EvilToken\` balance becomes 101.
-    *   \`getSwapAmount(EvilToken, token1, 100)\` calculates: \[(100 * BalEvilToken) / BalToken1 = (100 * 101) / 100 = 101\](cci:2://file:///Users/basonpark/Desktop/ether-guru/ether-guru/src/lib/challenges.ts:2:0-20:1) (approx). You get 101 Token 1.
+    *   \`getSwapAmount(EvilToken, token1, 100)\` calculates: \[(100 * BalEvilToken) / BalToken1 = (100 * 101) / 100 = 101\] (approx). You get 101 Token 1.
     *   Balances: Dex (0 T1, 100 T2, 101 Evil), You (... T1, ... T2, 900 Evil). Dex T1 drained.
 5.  **Swap EvilToken -> Token 2**: Call \`swap(EvilToken address, token2 address, 100)\`.
     *   \`transferFrom\` moves 100 \`EvilToken\` from you to Dex. Dex \`EvilToken\` balance becomes 201.
-    *   \`getSwapAmount(EvilToken, token2, 100)\` calculates: \[(100 * BalEvilToken) / BalToken2 = (100 * 201) / 100 = 201\](cci:2://file:///Users/basonpark/Desktop/ether-guru/ether-guru/src/lib/challenges.ts:2:0-20:1) (approx). You get 201 Token 2.
+    *   \`getSwapAmount(EvilToken, token2, 100)\` calculates: \[(100 * BalEvilToken) / BalToken2 = (100 * 201) / 100 = 201\] (approx). You get 201 Token 2.
     *   Balances: Dex (0 T1, 0 T2, 201 Evil), You (... T1, ... T2, 800 Evil). Dex T2 drained.
 
 *Refined calculation for step 4*: When calculating swap amount, the balance of \`EvilToken\` *after* the \`transferFrom\` should be used.

@@ -1,18 +1,19 @@
 import type { Metadata } from "next";
-import { Inter as FontSans } from "next/font/google"
+import { Inter as FontSans } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import Sidebar from "@/components/Sidebar";
-import Navbar from "@/components/Navbar"; 
+import Navbar from "@/components/Navbar";
 
 const fontSans = FontSans({
   subsets: ["latin"],
   variable: "--font-sans",
-})
+});
 
 export const metadata: Metadata = {
   title: "EtherGuru - Learn Smart Contract Security",
-  description: "Interactive Ethernaut-style challenges to learn about Solidity vulnerabilities.",
+  description:
+    "Interactive Ethernaut-style challenges to learn about Solidity vulnerabilities.",
 };
 
 export default function RootLayout({
@@ -28,12 +29,10 @@ export default function RootLayout({
           fontSans.variable
         )}
       >
-        <Navbar /> 
-        <div className="flex"> 
+        <Navbar />
+        <div className="flex">
           <Sidebar />
-          <main className="flex-1 p-6 overflow-auto">
-            {children}
-          </main>
+          <main className="flex-1 overflow-auto">{children}</main>
         </div>
       </body>
     </html>
