@@ -1,5 +1,6 @@
 // src/app/api/evaluate-explanation/route.ts
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server'; // Use NextRequest
+import { RateLimiterMemory } from 'rate-limiter-flexible';
 import OpenAI from 'openai';
 import { getChallengeBySlug } from '@/lib/challenges'; // Assuming correct path alias
 
@@ -12,25 +13,42 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-export async function POST(request: Request) {
+// Initialize rate limiter (3 requests per 5 minutes per IP)
+const rateLimiter = new RateLimiterMemory({
+  points: 3, // Number of points
+  duration: 10 * 60, // Per 5 minutes (in seconds)
+});
+
+export async function POST(request: NextRequest) { // Use NextRequest type
+  // Get IP address from request headers
+  const forwardedFor = request.headers.get('x-forwarded-for'); // Use request.headers
+  const realIp = request.headers.get('x-real-ip'); // Use request.headers
+  // Use x-forwarded-for (common proxy header), fallback to x-real-ip
+  const ip = forwardedFor ? forwardedFor.split(',')[0].trim() : realIp || 'unknown'; 
+
   try {
-    const { userExplanation, challengeSlug } = await request.json();
+    // Consume 1 point per request for the IP address
+    await rateLimiter.consume(ip);
 
-    // Basic input validation
-    if (!userExplanation || !challengeSlug) {
-      return NextResponse.json({ error: 'Missing userExplanation or challengeSlug' }, { status: 400 });
-    }
+    // --- Original logic wrapped in a try block ---
+    try {
+      const { userExplanation, challengeSlug } = await request.json();
 
-    // Retrieve the official challenge explanation
-    const challenge = getChallengeBySlug(challengeSlug);
-    if (!challenge || !challenge.explanation) {
-      return NextResponse.json({ error: 'Challenge or explanation not found' }, { status: 404 });
-    }
-    const officialExplanation = challenge.explanation;
-    const challengeName = challenge.name;
+      // Basic input validation
+      if (!userExplanation || !challengeSlug) {
+        return NextResponse.json({ error: 'Missing userExplanation or challengeSlug' }, { status: 400 });
+      }
 
-    // --- Construct the Prompt for OpenAI ---
-    const prompt = `
+      // Retrieve the official challenge explanation
+      const challenge = getChallengeBySlug(challengeSlug);
+      if (!challenge || !challenge.explanation) {
+        return NextResponse.json({ error: 'Challenge or explanation not found' }, { status: 404 });
+      }
+      const officialExplanation = challenge.explanation;
+      const challengeName = challenge.name;
+
+      // --- Construct the Prompt for OpenAI ---
+      const prompt = `
 You are an expert Ethereum security auditor evaluating explanations for Ethernaut challenges.
 The user is attempting the '${challengeName}' challenge.
 
@@ -60,59 +78,68 @@ Rules for Evaluation:
 - Ensure the feedback is constructive and helpful, especially for lower scores.
 `;
 
-    // --- Call OpenAI API ---
-    console.log(`Calling OpenAI for challenge: ${challengeName}`); // Server-side log
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini', // Using a cost-effective but capable model
-      messages: [
-        { role: 'system', content: 'You are an expert Ethereum security auditor evaluating explanations for Ethernaut challenges. Respond ONLY in the requested JSON format.' },
-        { role: 'user', content: prompt }
-      ],
-      response_format: { type: "json_object" }, // Request JSON output
-      temperature: 0.2, // Low temperature for consistent scoring
-      max_tokens: 300, // Limit response length
-    });
+      // --- Call OpenAI API ---
+      console.log(`Calling OpenAI for challenge: ${challengeName}, IP: ${ip}`); // Log IP
+      const completion = await openai.chat.completions.create({
+        model: 'gpt-4o-mini', // Using a cost-effective but capable model
+        messages: [
+          { role: 'system', content: 'You are an expert Ethereum security auditor evaluating explanations for Ethernaut challenges. Respond ONLY in the requested JSON format.' },
+          { role: 'user', content: prompt }
+        ],
+        response_format: { type: "json_object" }, // Request JSON output
+        temperature: 0.2, // Low temperature for consistent scoring
+        max_tokens: 300, // Limit response length
+      });
 
-    console.log("OpenAI response received"); // Server-side log
+      console.log(`OpenAI response received for IP: ${ip}`); // Log IP
 
-    // --- Parse Response ---
-    const content = completion.choices[0]?.message?.content;
-    if (!content) {
-      throw new Error("OpenAI returned empty content");
-    }
-
-    let score: number | null = null;
-    let feedback: string | null = null;
-
-    try {
-      const result = JSON.parse(content);
-      score = typeof result.score === 'number' ? Math.max(0, Math.min(10, result.score)) : null; // Clamp score 0-10
-      feedback = typeof result.feedback === 'string' ? result.feedback : 'Could not parse feedback.';
-
-      if (score === null || feedback === null) {
-        console.error("Failed to parse score or feedback from OpenAI JSON:", content);
-        throw new Error("Invalid JSON structure from OpenAI");
+      // --- Parse Response ---
+      const content = completion.choices[0]?.message?.content;
+      if (!content) {
+        throw new Error("OpenAI returned empty content");
       }
-    } catch (parseError) {
-      console.error("Error parsing OpenAI JSON response:", parseError);
-      console.error("Raw OpenAI content:", content);
-      // Attempt to extract score/feedback manually as fallback (less reliable)
-      const scoreMatch = content.match(/"score":\s*(\d+)/);
-      const feedbackMatch = content.match(/"feedback":\s*"([^"]*)"/);
-      score = scoreMatch ? parseInt(scoreMatch[1], 10) : 0;
-      feedback = feedbackMatch ? feedbackMatch[1] : "Error processing evaluation. Please try again.";
-      score = Math.max(0, Math.min(10, score)); // Clamp again
+
+      let score: number | null = null;
+      let feedback: string | null = null;
+
+      try {
+        const result = JSON.parse(content);
+        score = typeof result.score === 'number' ? Math.max(0, Math.min(10, result.score)) : null; // Clamp score 0-10
+        feedback = typeof result.feedback === 'string' ? result.feedback : 'Could not parse feedback.';
+
+        if (score === null || feedback === null) {
+          console.error("Failed to parse score or feedback from OpenAI JSON:", content);
+          throw new Error("Invalid JSON structure from OpenAI");
+        }
+      } catch (parseError) {
+        console.error("Error parsing OpenAI JSON response:", parseError);
+        console.error("Raw OpenAI content:", content);
+        // Attempt to extract score/feedback manually as fallback (less reliable)
+        const scoreMatch = content.match(/"score":\s*(\d+)/);
+        const feedbackMatch = content.match(/"feedback":\s*"([^"]*)"/);
+        score = scoreMatch ? parseInt(scoreMatch[1], 10) : 0;
+        feedback = feedbackMatch ? feedbackMatch[1] : "Error processing evaluation. Please try again.";
+        score = Math.max(0, Math.min(10, score)); // Clamp again
+      }
+
+      console.log(`Evaluation result - Score: ${score}, Feedback: ${feedback.substring(0, 50)}... (IP: ${ip})`); // Log IP
+
+      // --- Return Result ---
+      return NextResponse.json({ score, feedback });
+
+    } catch (error) {
+      console.error(`Error processing request for IP: ${ip}:`, error); // Log IP in error
+      return NextResponse.json({ error: 'Failed to evaluate explanation. Please try again later.' }, { status: 500 });
     }
+    // --- End of original logic try block ---
 
-
-    console.log(`Evaluation result - Score: ${score}, Feedback: ${feedback.substring(0, 50)}...`); // Server-side log
-
-    // --- Return Result ---
-    return NextResponse.json({ score, feedback });
-
-  } catch (error) {
-    console.error("Error in /api/evaluate-explanation:", error);
-    return NextResponse.json({ error: 'Failed to evaluate explanation. Please try again later.' }, { status: 500 });
+  } catch (rateLimitError: any) {
+    // Rate limiter failed (likely limit exceeded)
+    console.warn(`Rate limit exceeded for IP: ${ip}`); // Log rate limit event
+    // Check if the error object has points information (optional, for logging)
+    const secondsUntilReset = rateLimitError.msBeforeNext ? Math.ceil(rateLimitError.msBeforeNext / 1000) : 'unknown';
+    console.warn(`Time until reset: ${secondsUntilReset} seconds`);
+    return NextResponse.json({ error: 'Too Many Requests' }, { status: 429 });
   }
 }
 
