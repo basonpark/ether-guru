@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 function FloatingPaths({ position }: { position: number }) {
   const paths = Array.from({ length: 36 }, (_, i) => ({
@@ -106,7 +107,7 @@ export function BackgroundPaths({
               stiffness: 100,
               damping: 20,
             }}
-            className="text-lg sm:text-xl lg:text-2xl text-muted-foreground mx-auto max-w-xl mb-20"
+            className="text-lg sm:text-xl lg:text-2xl text-muted-foreground mx-auto max-w-xl mb-20 bg-white/80 m-3"
           >
             Learn about Ethereum smart contract vulnerabilities through
             interactive challenges inspired by Ethernaut.
@@ -117,24 +118,29 @@ export function BackgroundPaths({
                         dark:from-white/10 dark:to-black/10 p-px rounded-2xl backdrop-blur-lg 
                         overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300"
           >
-            <Button
-              variant="ghost"
-              className="rounded-[1.15rem] px-8 py-6 text-lg font-semibold backdrop-blur-md 
+            <Link href="/challenges/fallback" passHref legacyBehavior>
+              <Button
+                asChild // Important: Tells Button to render the Link's <a> tag
+                variant="ghost"
+                className="rounded-[1.15rem] px-8 py-6 text-lg font-semibold backdrop-blur-md 
                             bg-white/95 hover:bg-white/100 dark:bg-black/95 dark:hover:bg-black/100 
                             text-black dark:text-white transition-all duration-300 
                             group-hover:-translate-y-0.5 border border-black/10 dark:border-white/10
                             hover:shadow-md dark:hover:shadow-neutral-800/50"
-            >
-              <span className="opacity-90 group-hover:opacity-100 transition-opacity">
-                Start Hacking
-              </span>
-              <span
-                className="ml-3 opacity-70 group-hover:opacity-100 group-hover:translate-x-1.5 
-                                transition-all duration-300"
               >
-                →
-              </span>
-            </Button>
+                <a>
+                  <span className="opacity-90 group-hover:opacity-100 transition-opacity">
+                    Start Hacking
+                  </span>
+                  <span
+                    className="ml-3 opacity-70 group-hover:opacity-100 group-hover:translate-x-1.5 
+                                    transition-all duration-300"
+                  >
+                    →
+                  </span>
+                </a>
+              </Button>
+            </Link>
           </div>
         </motion.div>
       </div>

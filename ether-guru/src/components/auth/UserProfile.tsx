@@ -208,12 +208,22 @@ export default function UserProfile() {
     return (
       <div className="flex items-center space-x-2">
         <SignInDialog>
-          <Button variant="ghost" size="sm">
+          {/* Sign In Button Styling */}
+          <Button 
+            variant="outline" // Use outline as a base
+            size="sm"
+            className="border-primary/50 text-primary hover:bg-primary/10 shadow-md hover:shadow-lg hover:-translate-y-px transition-all duration-200"
+            >
             Sign In
           </Button>
         </SignInDialog>
         <SignUpDialog>
-          <Button variant="default" size="sm">
+          {/* Sign Up Button Styling - Gradient */}
+          <Button 
+            variant="default" // Keep default base for structure
+            size="sm"
+            className="bg-gradient-to-r from-primary to-primary/80 text-primary-foreground hover:opacity-95 shadow-md hover:shadow-lg hover:-translate-y-px transition-all duration-200"
+            >
             Sign Up
           </Button>
         </SignUpDialog>
