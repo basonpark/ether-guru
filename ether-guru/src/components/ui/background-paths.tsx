@@ -59,7 +59,7 @@ export function BackgroundPaths({
   const words = title.split(" ");
 
   return (
-    <div className="relative min-h-screen w-full flex items-center justify-center overflow-hidden bg-white dark:bg-neutral-950">
+    <div className="relative min-h-screen w-full flex items-center justify-center overflow-hidden bg-gradient-to-br from-slate-50 to-slate-400 dark:bg-neutral-950">
       <div className="absolute inset-0">
         <FloatingPaths position={1} />
         <FloatingPaths position={-1} />
@@ -107,7 +107,7 @@ export function BackgroundPaths({
               stiffness: 100,
               damping: 20,
             }}
-            className="text-lg sm:text-xl lg:text-2xl text-muted-foreground mx-auto max-w-xl mb-20 bg-white/80 m-3"
+            className="text-lg sm:text-xl lg:text-xl text-muted-foreground mx-auto max-w-xl mb-20 rounded-lg font-semibold p-4 bg-gradient-to-b from-white/100 to-white/10 dark:from-neutral-900/10 dark:to-transparent shadow-sm m-3 backdrop-blur-sm"
           >
             Learn about Ethereum smart contract vulnerabilities through
             interactive challenges inspired by Ethernaut.
