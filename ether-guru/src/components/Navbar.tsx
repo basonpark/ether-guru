@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import UserProfile from './auth/UserProfile';
 
 const Navbar = () => {
   return (
@@ -7,7 +8,9 @@ const Navbar = () => {
         <Link href="/" className="text-xl font-bold">
           EtherGuru
         </Link>
-        <div className="space-x-4 sm:space-x-6">
+        
+        {/* Middle navigation links */}
+        <div className="hidden md:flex space-x-4 sm:space-x-6">
           <Link href="/" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
             Ethernaut Challenges
           </Link>
@@ -17,6 +20,11 @@ const Navbar = () => {
           <Link href="#" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
             About (Soon)
           </Link>
+        </div>
+        
+        {/* User profile in top-right */}
+        <div className="flex items-center">
+          <UserProfile />
         </div>
       </div>
     </nav>
