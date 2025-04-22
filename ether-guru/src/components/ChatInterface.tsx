@@ -15,12 +15,20 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { motion } from "framer-motion";
+import { Expand, X } from 'lucide-react'; // Import Expand and X icons
+import useLocalStorageState from '@/hooks/useLocalStorageState'; // Import the custom hook
 
 // Define the structure for a chat message
 interface ChatMessage {
   sender: "user" | "bot";
   text: string;
   isTyping?: boolean; // Flag to indicate if the bot message is still typing
+}
+
+// Define props for ChatInterface
+interface ChatInterfaceProps {
+  onExpand?: () => void; // Optional callback for expand button
+  onMinimize?: () => void; // Optional callback for minimize button
 }
 
 const thinkingPhrases = [
@@ -32,8 +40,8 @@ const thinkingPhrases = [
 ];
 const TYPING_SPEED_MS = 5; // Milliseconds per character
 
-export function ChatInterface() {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+export function ChatInterface({ onExpand, onMinimize }: ChatInterfaceProps) {
+  const [messages, setMessages] = useLocalStorageState<ChatMessage[]>('etherGuruChatMessages', []);
   const [inputValue, setInputValue] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [currentThinkingPhrase, setCurrentThinkingPhrase] = useState(
@@ -45,20 +53,22 @@ export function ChatInterface() {
 
   // --- Effect for Initial Greeting ---
   useEffect(() => {
-    const timer = setTimeout(() => {
-      const initialMessage: ChatMessage = {
-        sender: "bot",
-        text: "", // Start empty for typing effect
-        isTyping: true,
-      };
-      setMessages([initialMessage]);
-      startTypingEffect(
-        initialMessage,
-        "Ask me anything! My answers are pretty solid 😉",
-        0
-      );
-    }, 1000);
-    return () => clearTimeout(timer);
+    if (messages.length === 0) {
+      const timer = setTimeout(() => {
+        const initialMessage: ChatMessage = {
+          sender: "bot",
+          text: "", // Start empty for typing effect
+          isTyping: true,
+        };
+        setMessages([initialMessage]);
+        startTypingEffect(
+          initialMessage,
+          "Ask me anything! My answers are pretty solid 😉",
+          0
+        );
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Run only once on mount
 
@@ -242,8 +252,20 @@ export function ChatInterface() {
 
   return (
     <Card className="w-full max-w-2xl mx-auto h-[60vh] flex flex-col shadow-2xl dark:shadow-blue-900/50">
-      <CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Ether Guru</CardTitle>
+        <div className="flex items-center space-x-1"> {/* Wrapper for buttons */}
+          {onExpand && (
+            <Button variant="ghost" size="icon" onClick={onExpand} aria-label="Expand Chat">
+              <Expand className="h-5 w-5" />
+            </Button>
+          )}
+          {onMinimize && (
+            <Button variant="ghost" size="icon" onClick={onMinimize} aria-label="Minimize Chat">
+              <X className="h-5 w-5" />
+            </Button>
+          )}
+        </div>
       </CardHeader>
       <CardContent className="flex-grow overflow-hidden">
         <ScrollArea className="h-full pr-4" ref={scrollAreaRef}>
