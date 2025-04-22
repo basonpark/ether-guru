@@ -6,6 +6,7 @@ import { NavBar } from "./tubelight-navbar";
 import { Home, Info, Code, Trophy } from "lucide-react";
 import { Button } from "./button";
 import Link from "next/link";
+import Image from "next/image"; 
 import UserProfile from "../auth/UserProfile";
 
 // Define navItems inside the Client Component
@@ -37,12 +38,19 @@ export default function DesktopNavBarWrapper() {
   // Apply classes needed for desktop layout (e.g., hiding on mobile)
   return (
     <div className="flex items-center justify-between w-full  ml-6">
-      {/* EtherGuru Title/Link on the left */}
+      {/* EtherGuru Logo and Title/Link on the left */}
       <Link
         href="/"
-        className="font-bold text-lg text-foreground hover:text-primary transition-colors"
+        className="flex items-center gap-2 font-bold text-lg text-foreground hover:text-primary transition-colors"
       >
-        EtherGuru
+        <Image
+          src="/ether-guru.png"
+          alt="Ether Guru Logo"
+          width={32} // Small size for navbar logo
+          height={32}
+          className="rounded-full" // Make it circular
+        />
+        <span>EtherGuru</span> {/* Keep text inside a span for potential styling */}
       </Link>
 
       {/* Middle flexible div to center the NavBar */}

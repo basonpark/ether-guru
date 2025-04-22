@@ -1,139 +1,308 @@
-'use client';
+"use client";
 
-import React, { useState, useRef, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import React, { useState, useRef, useEffect, useCallback } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import { motion } from "framer-motion";
 
 // Define the structure for a chat message
 interface ChatMessage {
-  sender: 'user' | 'bot';
+  sender: "user" | "bot";
   text: string;
+  isTyping?: boolean; // Flag to indicate if the bot message is still typing
 }
+
+const thinkingPhrases = [
+  "Thinking...",
+  "Consulting the Solidity docs...",
+  "Generating response...",
+  "Almost there...",
+  "Let me check that...",
+];
+const TYPING_SPEED_MS = 5; // Milliseconds per character
 
 export function ChatInterface() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [inputValue, setInputValue] = useState<string>('');
+  const [inputValue, setInputValue] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [currentThinkingPhrase, setCurrentThinkingPhrase] = useState(
+    thinkingPhrases[0]
+  );
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const thinkingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const typingIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Function to scroll to the bottom of the chat
-  const scrollToBottom = () => {
-    if (scrollAreaRef.current) {
-      // Use setTimeout to ensure the DOM has updated before scrolling
-      setTimeout(() => {
-        const scrollableViewport = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]');
-        if (scrollableViewport) {
-            scrollableViewport.scrollTop = scrollableViewport.scrollHeight;
-        }
-      }, 0);
+  // --- Effect for Initial Greeting ---
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const initialMessage: ChatMessage = {
+        sender: "bot",
+        text: "", // Start empty for typing effect
+        isTyping: true,
+      };
+      setMessages([initialMessage]);
+      startTypingEffect(
+        initialMessage,
+        "Ask me anything! My answers are pretty solid 😉",
+        0
+      );
+    }, 1000);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run only once on mount
+
+  // --- Effect for Cycling Thinking Phrases ---
+  useEffect(() => {
+    if (isLoading) {
+      let phraseIndex = 0;
+      setCurrentThinkingPhrase(thinkingPhrases[phraseIndex]); // Set initial phrase immediately
+      thinkingIntervalRef.current = setInterval(() => {
+        phraseIndex = (phraseIndex + 1) % thinkingPhrases.length;
+        setCurrentThinkingPhrase(thinkingPhrases[phraseIndex]);
+      }, 2000); // Change phrase every 2 seconds
+    } else {
+      if (thinkingIntervalRef.current) {
+        clearInterval(thinkingIntervalRef.current);
+        thinkingIntervalRef.current = null;
+      }
     }
-  };
+    // Cleanup on unmount or when isLoading changes
+    return () => {
+      if (thinkingIntervalRef.current) {
+        clearInterval(thinkingIntervalRef.current);
+      }
+    };
+  }, [isLoading]);
 
-  // Scroll to bottom whenever messages change
+  // --- Function to Scroll To Bottom ---
+  const scrollToBottom = useCallback(() => {
+    if (scrollAreaRef.current) {
+      setTimeout(() => {
+        const scrollableViewport = scrollAreaRef.current?.querySelector(
+          "[data-radix-scroll-area-viewport]"
+        );
+        if (scrollableViewport) {
+          scrollableViewport.scrollTop = scrollableViewport.scrollHeight;
+        }
+      }, 50); // Small delay to allow rendering
+    }
+  }, []);
+
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, scrollToBottom]);
+
+  // --- Typing Effect Logic ---
+  const startTypingEffect = useCallback(
+    (targetMessage: ChatMessage, fullText: string, messageIndex: number) => {
+      let currentText = "";
+      let charIndex = 0;
+
+      if (typingIntervalRef.current) {
+        clearInterval(typingIntervalRef.current); // Clear any existing typing interval
+      }
+
+      typingIntervalRef.current = setInterval(() => {
+        if (charIndex < fullText.length) {
+          currentText += fullText[charIndex];
+          // Update the specific message in the array
+          setMessages((prevMessages) => {
+            const updatedMessages = [...prevMessages];
+            // Ensure the message still exists at the index
+            if (updatedMessages[messageIndex]) {
+              updatedMessages[messageIndex] = {
+                ...targetMessage,
+                text: currentText,
+                isTyping: true,
+              };
+            }
+            return updatedMessages;
+          });
+          charIndex++;
+          scrollToBottom(); // Scroll as text grows
+        } else {
+          // Typing finished
+          if (typingIntervalRef.current)
+            clearInterval(typingIntervalRef.current);
+          typingIntervalRef.current = null;
+          // Mark the message as finished typing
+          setMessages((prevMessages) => {
+            const updatedMessages = [...prevMessages];
+            if (updatedMessages[messageIndex]) {
+              updatedMessages[messageIndex] = {
+                ...updatedMessages[messageIndex],
+                isTyping: false,
+              };
+            }
+            return updatedMessages;
+          });
+        }
+      }, TYPING_SPEED_MS);
+    },
+    [scrollToBottom]
+  ); // Include scrollToBottom in dependencies
+
+  // Cleanup typing interval on unmount
+  useEffect(() => {
+    return () => {
+      if (typingIntervalRef.current) {
+        clearInterval(typingIntervalRef.current);
+      }
+    };
+  }, []);
+
+  // --- Send Message Handler ---
+  const handleSendMessage = async () => {
+    const userQuery = inputValue.trim();
+    if (!userQuery || isLoading) return;
+
+    // Clear any ongoing typing effect before sending new message
+    if (typingIntervalRef.current) {
+      clearInterval(typingIntervalRef.current);
+      typingIntervalRef.current = null;
+      // Ensure the last bot message is marked as not typing if interrupted
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.sender === "bot" ? { ...msg, isTyping: false } : msg
+        )
+      );
+    }
+
+    const newUserMessage: ChatMessage = { sender: "user", text: userQuery };
+    setMessages((prevMessages) => [...prevMessages, newUserMessage]);
+    setInputValue("");
+    setIsLoading(true);
+
+    try {
+      const response = await fetch("/api/query-docs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: userQuery }),
+      });
+
+      setIsLoading(false); // Stop loading indicator earlier
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+          errorData.error || `HTTP error! status: ${response.status}`
+        );
+      }
+
+      const data = await response.json();
+      const botMessage: ChatMessage = {
+        sender: "bot",
+        text: "",
+        isTyping: true,
+      }; // Start empty
+      // Add the placeholder message first
+      const newMessageIndex = messages.length + 1; // Index where the new message will be
+      setMessages((prevMessages) => [...prevMessages, botMessage]);
+      // Start typing effect for the new message
+      startTypingEffect(botMessage, data.answer, newMessageIndex);
+    } catch (error) {
+      setIsLoading(false); // Ensure loading stops on error
+      console.error("Failed to fetch bot response:", error);
+      const errorText = `Sorry, I encountered an error. ${
+        error instanceof Error ? error.message : "Please try again."
+      }`;
+      const errorMessage: ChatMessage = {
+        sender: "bot",
+        text: "",
+        isTyping: true,
+      };
+      const errorIndex = messages.length + (isLoading ? 0 : 1); // Adjust index based on current state
+      setMessages((prevMessages) => [...prevMessages, errorMessage]);
+      startTypingEffect(errorMessage, errorText, errorIndex);
+    }
+    // Removed finally block as isLoading is handled within try/catch
+  };
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(event.target.value);
   };
 
-  const handleSendMessage = async () => {
-    const userQuery = inputValue.trim();
-    if (!userQuery || isLoading) return;
-
-    // Add user message to chat
-    const newUserMessage: ChatMessage = { sender: 'user', text: userQuery };
-    setMessages((prevMessages) => [...prevMessages, newUserMessage]);
-    setInputValue('');
-    setIsLoading(true);
-
-    try {
-      // Call the backend API
-      const response = await fetch('/api/query-docs', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ query: userQuery }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      const botMessage: ChatMessage = { sender: 'bot', text: data.answer }; // Assuming the API returns { answer: '...' }
-      setMessages((prevMessages) => [...prevMessages, botMessage]);
-
-    } catch (error) {
-      console.error('Failed to fetch bot response:', error);
-      const errorMessage: ChatMessage = {
-        sender: 'bot',
-        text: `Sorry, I encountered an error. ${error instanceof Error ? error.message : 'Please try again.'}`,
-      };
-      setMessages((prevMessages) => [...prevMessages, errorMessage]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Allow sending message with Enter key
   const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'Enter' && !event.shiftKey) {
-      event.preventDefault(); // Prevent default form submission or newline
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
       handleSendMessage();
     }
   };
 
   return (
-    <Card className="w-full max-w-2xl mx-auto h-[70vh] flex flex-col shadow-lg">
+    <Card className="w-full max-w-2xl mx-auto h-[60vh] flex flex-col shadow-2xl dark:shadow-blue-900/50">
       <CardHeader>
-        <CardTitle>Solidity Docs Chat</CardTitle>
+        <CardTitle>Ether Guru</CardTitle>
       </CardHeader>
       <CardContent className="flex-grow overflow-hidden">
         <ScrollArea className="h-full pr-4" ref={scrollAreaRef}>
           <div className="space-y-4">
             {messages.map((message, index) => (
-              <div
+              <motion.div
                 key={index}
-                className={`flex items-start gap-3 ${message.sender === 'user' ? 'justify-end' : ''}`}
+                className={`flex items-start gap-3 ${
+                  message.sender === "user" ? "justify-end" : ""
+                }`}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, ease: "easeOut" }}
               >
-                {message.sender === 'bot' && (
-                  <Avatar className="w-8 h-8 border">
-                    <AvatarImage src="/bot-avatar.png" alt="Bot" /> {/* Placeholder for bot avatar */}
-                    <AvatarFallback>AI</AvatarFallback>
+                {message.sender === "bot" && (
+                  <Avatar className="w-8 h-8 border shadow-sm">
+                    <AvatarImage src="/ether-guru.png" alt="Bot" />
+                    <AvatarFallback>EG</AvatarFallback>
                   </Avatar>
                 )}
                 <div
-                  className={`rounded-lg px-3 py-2 max-w-[75%] whitespace-pre-wrap ${message.sender === 'user'
-                      ? 'bg-blue-500 text-white'
-                      : 'bg-gray-100 dark:bg-gray-800'}`}
+                  className={`rounded-lg px-3 py-2 max-w-[85%] shadow-md ${
+                    message.sender === "user"
+                      ? "bg-slate-600 text-white"
+                      : "bg-gray-100 dark:bg-gray-800 prose prose-sm dark:prose-invert max-w-none"
+                  }`}
                 >
-                  {message.text}
+                  {message.sender === "bot" ? (
+                    // Conditionally add cursor if typing
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {message.text + (message.isTyping ? "▍" : "")}
+                    </ReactMarkdown>
+                  ) : (
+                    <span className="whitespace-pre-wrap">{message.text}</span>
+                  )}
                 </div>
-                {message.sender === 'user' && (
-                  <Avatar className="w-8 h-8 border">
-                    {/* Add user avatar if desired, or use fallback */}
+                {message.sender === "user" && (
+                  <Avatar className="w-8 h-8 border shadow-sm">
                     <AvatarFallback>U</AvatarFallback>
                   </Avatar>
                 )}
-              </div>
+              </motion.div>
             ))}
+            {/* Dynamic Thinking Indicator */}
             {isLoading && (
-              <div className="flex items-start gap-3">
-                <Avatar className="w-8 h-8 border">
-                    <AvatarImage src="/bot-avatar.png" alt="Bot" />
-                    <AvatarFallback>AI</AvatarFallback>
-                 </Avatar>
-                 <div className="rounded-lg px-3 py-2 bg-gray-100 dark:bg-gray-800">
-                    Thinking...
-                 </div>
-              </div>
+              <motion.div
+                className="flex items-start gap-3"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <Avatar className="w-10 h-10 border shadow-lg">
+                  <AvatarImage src="/ether-guru.png" alt="Bot" />
+                  <AvatarFallback>AI</AvatarFallback>
+                </Avatar>
+                <div className="rounded-lg px-3 py-2 bg-gray-100 dark:bg-gray-800 shadow-md">
+                  {currentThinkingPhrase} {/* Display dynamic phrase */}
+                </div>
+              </motion.div>
             )}
           </div>
         </ScrollArea>
@@ -146,11 +315,22 @@ export function ChatInterface() {
             value={inputValue}
             onChange={handleInputChange}
             onKeyDown={handleKeyDown}
-            disabled={isLoading}
+            disabled={isLoading} // Keep disabled while loading OR typing
             className="flex-1"
           />
-          <Button onClick={handleSendMessage} disabled={isLoading || !inputValue.trim()}>
-            {isLoading ? 'Sending...' : 'Send'}
+          <Button
+            onClick={handleSendMessage}
+            disabled={
+              isLoading ||
+              !inputValue.trim() ||
+              messages.some((m) => m.isTyping)
+            }
+          >
+            {isLoading
+              ? "Wait..."
+              : messages.some((m) => m.isTyping)
+              ? "Typing..."
+              : "Send"}
           </Button>
         </div>
       </CardFooter>

@@ -4,7 +4,9 @@ import "./globals.css";
 import { cn } from "@/lib/utils";
 import Sidebar from "@/components/Sidebar";
 import DesktopNavBarWrapper from "@/components/ui/DesktopNavBarWrapper"; 
-import { FloatingChatWidget } from '@/components/FloatingChatWidget'; // Import the new widget
+import { FloatingChatWidget } from '@/components/FloatingChatWidget'; 
+import Link from "next/link";
+import Image from "next/image"; 
 
 const fontSans = FontSans({
   subsets: ["latin"],
@@ -35,7 +37,20 @@ export default function RootLayout({
           <div className="container flex h-16 items-center justify-between"> 
             {/* Render NavBar Wrapper (will include EtherGuru link now) */}
             <div className="flex flex-1 items-center justify-center">
-              <DesktopNavBarWrapper />
+              <DesktopNavBarWrapper>
+                <Link href="/" className="flex items-center gap-2" passHref>
+                  <Image
+                    src="/ether-guru.png"
+                    alt="Ether Guru Logo"
+                    width={32} 
+                    height={32}
+                    className="rounded-full" 
+                  />
+                  <span className="font-bold text-lg tracking-tight">
+                    ETHERGURU
+                  </span>
+                </Link>
+              </DesktopNavBarWrapper>
             </div>
           </div>
         </header>
@@ -43,7 +58,7 @@ export default function RootLayout({
         <div className="flex flex-1"> 
           <Sidebar />
           <main className="flex-1 overflow-y-auto">{children}</main>
-          <FloatingChatWidget /> {/* Add the floating widget here */}
+          <FloatingChatWidget /> 
         </div>
       </body>
     </html>
