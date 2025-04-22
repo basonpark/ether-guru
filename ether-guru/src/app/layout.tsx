@@ -4,6 +4,7 @@ import "./globals.css";
 import { cn } from "@/lib/utils";
 import Sidebar from "@/components/Sidebar";
 import DesktopNavBarWrapper from "@/components/ui/DesktopNavBarWrapper"; 
+import { FloatingChatWidget } from '@/components/FloatingChatWidget'; // Import the new widget
 
 const fontSans = FontSans({
   subsets: ["latin"],
@@ -42,6 +43,7 @@ export default function RootLayout({
         <div className="flex flex-1"> 
           <Sidebar />
           <main className="flex-1 overflow-y-auto">{children}</main>
+          <FloatingChatWidget /> {/* Add the floating widget here */}
         </div>
       </body>
     </html>
