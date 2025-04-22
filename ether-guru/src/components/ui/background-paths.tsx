@@ -5,25 +5,6 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import Image from "next/image";
 
-// Animation Variants for the paths
-const pathVariants = {
-  hidden: {
-    opacity: 0,
-    pathLength: 0,
-    filter: 'blur(5px)' // Initial blur
-  },
-  visible: (i: number) => ({
-    opacity: 1,
-    pathLength: 1,
-    filter: 'blur(0px)', // Animate to no blur
-    transition: {
-      pathLength: { delay: i * 0.05, duration: 1.5, ease: "easeInOut" },
-      opacity: { delay: i * 0.05, duration: 0.5, ease: "easeIn" },
-      filter: { delay: i * 0.05, duration: 1.0, ease: "easeOut" } // Animate blur out
-    }
-  })
-};
-
 function FloatingPaths({ position }: { position: number }) {
   const paths = Array.from({ length: 36 }, (_, i) => ({
     id: i,
@@ -46,17 +27,19 @@ function FloatingPaths({ position }: { position: number }) {
         fill="none"
       >
         <title>EtherGuru</title>
-        {paths.map((path, i) => (
+        {paths.map((path) => (
           <motion.path
             key={path.id}
             d={path.d}
             stroke="currentColor"
             strokeWidth={path.width}
             strokeOpacity={0.1 + path.id * 0.03}
-            variants={pathVariants} // Apply variants
-            initial="hidden"        // Start hidden
-            animate="visible"       // Animate to visible
-            custom={i}            // Pass index for stagger
+            initial={{ pathLength: 0.3, opacity: 0.6 }}
+            animate={{
+              pathLength: 1,
+              opacity: [0.3, 0.6, 0.3],
+              pathOffset: [0, 1, 0],
+            }}
             transition={{
               duration: 20 + Math.random() * 10,
               repeat: Number.POSITIVE_INFINITY,
