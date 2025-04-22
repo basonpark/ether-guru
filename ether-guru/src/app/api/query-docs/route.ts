@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import OpenAI from 'openai';
 
-// Ensure environment variables are loaded
+// Load environment variables
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const openaiApiKey = process.env.OPENAI_API_KEY;
@@ -21,16 +21,17 @@ if (!openaiApiKey) {
 // Initialize clients
 const supabase = createClient(supabaseUrl, supabaseServiceRoleKey, {
   auth: {
-    persistSession: false, // Typically false for server-side operations
+    persistSession: false,
   },
 });
 const openai = new OpenAI({ apiKey: openaiApiKey });
 
-// Configuration for the embedding model
-const embeddingModel = 'text-embedding-3-small'; // Must match ingestion model
-const embeddingDimension = 1536; // Dimension for text-embedding-3-small
-const matchThreshold = 0.78; // Similarity threshold (adjust as needed)
-const matchCount = 5; // Number of matches to retrieve
+// Configuration
+const embeddingModel = 'text-embedding-3-small'; // Ensure this matches ingestion if re-run
+const embeddingDimension = 1536; // Dimension for text-embedding-3-large
+const matchThreshold = 0.55; // Keep the tuned threshold
+const matchCount = 3; // Limit context slightly
+const chatModel = 'gpt-4o-mini'; // Model for generating the answer
 
 export async function POST(req: NextRequest) {
   try {
@@ -39,7 +40,6 @@ export async function POST(req: NextRequest) {
     if (!query || typeof query !== 'string') {
       return NextResponse.json({ error: 'Invalid query provided' }, { status: 400 });
     }
-
     console.log(`Received query: ${query}`);
 
     // 1. Generate embedding for the user's query
@@ -49,53 +49,78 @@ export async function POST(req: NextRequest) {
       input: query,
       dimensions: embeddingDimension,
     });
-
     const queryEmbedding = embeddingResponse.data[0].embedding;
     console.log('Query embedding generated.');
 
-    // 2. Query Supabase for similar documents using the pgvector function
+    // 2. Query Supabase for similar documents
     console.log('Querying Supabase for similar documents...');
-    const { data: documents, error: matchError } = await supabase.rpc(
-      'match_documents', // The Supabase function we created
-      {
-        query_embedding: queryEmbedding, // The embedding vector
-        match_threshold: matchThreshold, // Minimum similarity threshold
-        match_count: matchCount, // Maximum number of matches
-      }
-    );
+    const { data: documents, error: matchError } = await supabase.rpc('match_documents', {
+      query_embedding: queryEmbedding,
+      match_threshold: matchThreshold,
+      match_count: matchCount,
+    });
 
     if (matchError) {
-      console.error('Error matching documents:', matchError);
-      return NextResponse.json(
-        { error: 'Failed to match documents', details: matchError.message },
-        { status: 500 }
-      );
+      console.error('Supabase RPC error:', matchError);
+      // Ensure the function signature matches the DB: check param names/types
+      // Also check if the pgvector index exists and is valid for cosine similarity
+      return NextResponse.json({ error: `Database query failed: ${matchError.message}` }, { status: 500 });
     }
 
-    if (!documents || documents.length === 0) {
-      console.log('No matching documents found.');
-      return NextResponse.json(
-        { message: 'No relevant documents found.', results: [] },
-        { status: 200 }
-      );
+    console.log(`Found ${documents?.length ?? 0} relevant document chunks.`);
+
+    // 3. Prepare context for OpenAI Chat Completion
+    let contextText = '';
+    if (documents && documents.length > 0) {
+      contextText = documents.map((doc: any) => doc.content).join('\n\n---\n\n');
+      console.log("Context prepared for LLM.");
+    } else {
+      console.log("No relevant documents found to provide context.");
+       // Optional: Decide if you want to proceed without context or return a specific message
+       // For now, we proceed but the prompt will indicate lack of specific context
+       contextText = "No specific context found in the Solidity documentation for this query.";
     }
 
-    console.log(`Found ${documents.length} matching documents.`);
+    // 4. Generate response using OpenAI Chat Completion
+    console.log('Generating response with OpenAI Chat Completion...');
+    const chatMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
+        {
+            role: 'system',
+            content: `You are EtherGuru, a very helpful assistant specialized in Solidity. Answer the user's question based *primarily* on the provided context from the Solidity documentation. If the context doesn't fully cover the question, you may use your general knowledge but clearly state that the information is not from the provided docs. Keep your answers concise and focused on Solidity. If the users ask weird questions that are not based on solidity or blockchain technology broadly, say that you are only here to answer questinos on solidityContext:\n---\n${contextText}\n---`,
+        },
+        {
+            role: 'user',
+            content: query,
+        },
+    ];
 
-    // 3. Return the content of the matched documents (for now)
-    // Later, we'll feed this into a language model
-    const results = documents.map((doc: any) => ({ // Use 'any' for now, refine later if needed
-        content: doc.content,
-        similarity: doc.similarity
-    }));
+    const completionResponse = await openai.chat.completions.create({
+      model: chatModel,
+      messages: chatMessages,
+      temperature: 0.5, // Adjust for creativity vs factualness
+      max_tokens: 500,
+    });
 
-    return NextResponse.json({ message: 'Query successful', results }, { status: 200 });
+    const aiResponse = completionResponse.choices[0]?.message?.content?.trim();
+
+    if (!aiResponse) {
+        console.error('OpenAI Chat Completion failed to return content.');
+        return NextResponse.json({ error: 'Failed to generate AI response.' }, { status: 500 });
+    }
+
+    console.log("AI response generated successfully.");
+
+    // 5. Return the AI-generated answer
+    return NextResponse.json({ answer: aiResponse });
 
   } catch (error: any) {
-    console.error('Error processing query:', error);
-    return NextResponse.json(
-      { error: 'Internal server error', details: error.message },
-      { status: 500 }
-    );
+    console.error('API Error:', error);
+    // Consider more specific error handling (e.g., OpenAI rate limits)
+    let errorMessage = error.message || 'An unexpected error occurred.';
+    // Check if the error is from OpenAI API key issues
+    if (error.status === 401) {
+      errorMessage = 'Invalid OpenAI API Key.';
+    }
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

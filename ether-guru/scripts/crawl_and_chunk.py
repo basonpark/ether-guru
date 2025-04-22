@@ -29,8 +29,8 @@ EXCLUDE_PATTERNS = [
 ]
 
 # Text Chunking Settings
-CHUNK_SIZE = 1000
-CHUNK_OVERLAP = 150
+CHUNK_SIZE = 500
+CHUNK_OVERLAP = 75
 
 # Supabase Settings
 SUPABASE_URL = os.getenv("NEXT_PUBLIC_SUPABASE_URL")
