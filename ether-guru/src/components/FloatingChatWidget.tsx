@@ -1,26 +1,26 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { ChatInterface } from '@/components/ChatInterface'; // Import the main chat logic
-import { MessageSquare, X, Expand } from 'lucide-react'; // Icons for button (Expand might be used in ChatInterface now)
-import { motion, AnimatePresence } from 'framer-motion'; // Import motion components
-import { useRouter } from 'next/navigation'; // Import the router
+import React, { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { ChatInterface } from "@/components/ChatInterface"; // Import the main chat logic
+import { MessageSquare, X, Expand } from "lucide-react"; // Icons for button (Expand might be used in ChatInterface now)
+import { motion, AnimatePresence } from "framer-motion"; // Import motion components
+import { useRouter } from "next/navigation"; // Import the router
 
 // Define animation variants for the chat window
 const chatVariants = {
   hidden: {
     opacity: 0,
-    y: 30,      // Start slightly below final position for the slide-up effect
-    scale: 0.95,  // Start slightly smaller
-    transition: { duration: 0.2, ease: "easeIn" }
+    y: 30, // Start slightly below final position for the slide-up effect
+    scale: 0.95, // Start slightly smaller
+    transition: { duration: 0.2, ease: "easeIn" },
   },
   visible: {
     opacity: 1,
-    y: 0,       // Move to final position
-    scale: 1,   // Scale to full size
-    transition: { duration: 0.3, ease: "easeOut" }
-  }
+    y: 0, // Move to final position
+    scale: 1, // Scale to full size
+    transition: { duration: 0.3, ease: "easeOut" },
+  },
 };
 
 export function FloatingChatWidget() {
@@ -31,7 +31,7 @@ export function FloatingChatWidget() {
 
   // Function to handle expanding the chat to the full page
   const handleExpand = () => {
-    router.push('/solidity'); // Navigate to the main Solidity chat page
+    router.push("/solidity"); // Navigate to the main Solidity chat page
     setIsOpen(false); // Close the widget
   };
 
@@ -60,11 +60,24 @@ export function FloatingChatWidget() {
       <motion.div
         initial={{ scale: 0 }} // Start button scaled down
         animate={{ scale: 1 }}
-        transition={{ duration: 0.3, delay: 0.5, type: 'spring', stiffness: 150 }} // Pop-in effect
+        transition={{
+          duration: 0.3,
+          delay: 0.5,
+          type: "spring",
+          stiffness: 150,
+        }} // Pop-in effect
       >
-        <Button onClick={toggleOpen} size="icon" className="rounded-full w-14 h-14 shadow-lg">
-          {isOpen ? <X className="h-6 w-6" /> : <MessageSquare className="h-6 w-6" />}
-          <span className="sr-only">{isOpen ? 'Close Chat' : 'Open Chat'}</span>
+        <Button
+          onClick={toggleOpen}
+          size="icon"
+          className="rounded-full w-14 h-14 shadow-lg"
+        >
+          {isOpen ? (
+            <X className="h-6 w-6" />
+          ) : (
+            <MessageSquare className="h-6 w-6" />
+          )}
+          <span className="sr-only">{isOpen ? "Close Chat" : "Open Chat"}</span>
         </Button>
       </motion.div>
     </div>
