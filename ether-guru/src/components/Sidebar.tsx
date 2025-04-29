@@ -72,10 +72,12 @@ export default function Sidebar() {
                       : `text-gray-700 dark:text-gray-300 ${hoverStyle}` // Apply hover style
                   }`}
                 >
-                  {IconComponent && (
-                    <IconComponent className="h-4 w-4 mr-2 flex-shrink-0" />
-                  )}{" "}
-                  <span className="truncate">{name}</span> {/* Wrap name */}
+                  <div className="flex items-center">
+                    {IconComponent && (
+                      <IconComponent className="h-4 w-4 mr-2 flex-shrink-0" />
+                    )}{" "}
+                    <span className="truncate">{name}</span> {/* Wrap name */}
+                  </div>
                 </Link>
               </li>
             );

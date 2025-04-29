@@ -142,11 +142,17 @@ export async function POST(req: NextRequest) {
         embeddingsStored: embeddingsWithContent.length // May be less than chunksProcessed if embedding generation failed for some
     }, { status: 200 });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(`Embedding process failed:`, error);
+    let errorMessage = 'Unknown internal server error.';
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    } else if (typeof error === 'object' && error !== null && 'message' in error && typeof (error as { message: unknown }).message === 'string') {
+      errorMessage = (error as { message: string }).message;
+    }
     return NextResponse.json({
       message: "Embedding process failed due to an internal server error.",
-      error: typeof error?.message === 'string' ? error.message : 'Unknown internal server error.'
+      error: errorMessage
     }, { status: 500 });
   }
 }

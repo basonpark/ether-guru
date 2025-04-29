@@ -187,13 +187,13 @@ export default function ChallengeDisplay({ slug }: ChallengeDisplayProps) {
 
   const challenge = getChallengeBySlug(slug);
 
-  if (!challenge) {
-    return <div>Challenge not found for slug: {slug}</div>;
-  }
-
   useEffect(() => {
     setRevealedHintContentIndices(new Set());
   }, [slug]);
+
+  if (!challenge) {
+    return <div>Challenge not found for slug: {slug}</div>;
+  }
 
   return (
     <div className="h-full overflow-y-auto p-6 md:p-8 bg-gradient-to-br from-slate-100 to-slate-400 dark:from-slate-950 dark:to-slate-900">

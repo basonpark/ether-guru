@@ -59,7 +59,6 @@ export default function Home() {
           <BackgroundPaths />
         </div>
       </section>
-
       {/* Challenges Section */}
       <section className="py-16 sm:py-24 bg-background">
         <div className="container mx-auto px-4">

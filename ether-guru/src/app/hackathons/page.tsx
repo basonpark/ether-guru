@@ -308,7 +308,7 @@ export default function HackathonsPage() {
           <p className="text-lg text-slate-700 dark:text-slate-300 mb-6">
             Get paid to find security vulnerabilities in smart contracts.
             Rewards can range from hundreds to millions of dollars depending on
-            the severity and the project's budget.
+            the severity and the project&apos;s budget.
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {/* Add Bounty Platform Cards here */}

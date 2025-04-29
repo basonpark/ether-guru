@@ -128,9 +128,15 @@ export default function UserProfile() {
       });
       if (error) throw error;
       setResendStatus("Confirmation email sent!");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error resending confirmation email:", error);
-      setResendStatus(`Error: ${error.message || 'Could not send email.'}`);
+      let errorMessage = 'Could not send email.';
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === 'object' && error !== null && 'message' in error && typeof (error as { message: unknown }).message === 'string') {
+        errorMessage = (error as { message: string }).message;
+      }
+      setResendStatus(`Error: ${errorMessage}`);
     }
   };
 

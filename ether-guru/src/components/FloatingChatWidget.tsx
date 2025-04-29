@@ -55,7 +55,6 @@ export function FloatingChatWidget() {
           </motion.div>
         )}
       </AnimatePresence>
-
       {/* Floating Action Button (FAB) to toggle the chat */}
       <motion.div
         initial={{ scale: 0 }} // Start button scaled down

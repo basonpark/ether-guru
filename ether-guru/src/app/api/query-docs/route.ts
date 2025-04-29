@@ -33,6 +33,11 @@ const matchThreshold = 0.55; // Keep the tuned threshold
 const matchCount = 3; // Limit context slightly
 const chatModel = 'gpt-4o-mini'; // Model for generating the answer
 
+interface DocumentChunk {
+  content: string;
+  // Add other properties if known, e.g., embedding: number[], metadata: object
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { query } = await req.json();
@@ -72,7 +77,7 @@ export async function POST(req: NextRequest) {
     // 3. Prepare context for OpenAI Chat Completion
     let contextText = '';
     if (documents && documents.length > 0) {
-      contextText = documents.map((doc: any) => doc.content).join('\n\n---\n\n');
+      contextText = documents.map((doc: DocumentChunk) => doc.content).join('\n\n---\n\n');
       console.log("Context prepared for LLM.");
     } else {
       console.log("No relevant documents found to provide context.");
@@ -113,14 +118,33 @@ export async function POST(req: NextRequest) {
     // 5. Return the AI-generated answer
     return NextResponse.json({ answer: aiResponse });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('API Error:', error);
-    // Consider more specific error handling (e.g., OpenAI rate limits)
-    let errorMessage = error.message || 'An unexpected error occurred.';
-    // Check if the error is from OpenAI API key issues
-    if (error.status === 401) {
-      errorMessage = 'Invalid OpenAI API Key.';
+    let errorMessage = 'An unexpected error occurred.';
+    let statusCode = 500; // Default status code
+
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    } else if (typeof error === 'object' && error !== null) {
+      // Safely check for message property
+      if ('message' in error && typeof (error as { message: unknown }).message === 'string') {
+        errorMessage = (error as { message: string }).message;
+      }
+      // Safely check for status property (like OpenAI errors)
+      if ('status' in error && typeof (error as { status: unknown }).status === 'number') {
+          const status = (error as { status: number }).status;
+          if (status === 401) {
+              errorMessage = 'Invalid OpenAI API Key.';
+              statusCode = 401; // Update status code for auth error
+          }
+          // Potentially handle other specific status codes here
+          else {
+            // Keep original error message if status is not 401 but exists
+            statusCode = status >= 100 && status < 600 ? status : 500; // Use status if valid HTTP code
+          }
+      }
     }
-    return NextResponse.json({ error: errorMessage }, { status: 500 });
+
+    return NextResponse.json({ error: errorMessage }, { status: statusCode });
   }
 }

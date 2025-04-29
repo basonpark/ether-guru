@@ -133,11 +133,21 @@ Rules for Evaluation:
     }
     // --- End of original logic try block ---
 
-  } catch (rateLimitError: any) {
+  } catch (rateLimitError: unknown) {
     // Rate limiter failed (likely limit exceeded)
     console.warn(`Rate limit exceeded for IP: ${ip}`); // Log rate limit event
-    // Check if the error object has points information (optional, for logging)
-    const secondsUntilReset = rateLimitError.msBeforeNext ? Math.ceil(rateLimitError.msBeforeNext / 1000) : 'unknown';
+
+    // Safely check for msBeforeNext property
+    let secondsUntilReset = 'unknown';
+    if (
+      typeof rateLimitError === 'object' &&
+      rateLimitError !== null &&
+      'msBeforeNext' in rateLimitError &&
+      typeof (rateLimitError as { msBeforeNext: unknown }).msBeforeNext === 'number'
+    ) {
+      secondsUntilReset = Math.ceil((rateLimitError as { msBeforeNext: number }).msBeforeNext / 1000).toString();
+    }
+
     console.warn(`Time until reset: ${secondsUntilReset} seconds`);
     return NextResponse.json({ error: 'Too Many Requests' }, { status: 429 });
   }

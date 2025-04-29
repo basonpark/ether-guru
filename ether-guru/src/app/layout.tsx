@@ -3,10 +3,10 @@ import { Inter as FontSans } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import Sidebar from "@/components/Sidebar";
-import DesktopNavBarWrapper from "@/components/ui/DesktopNavBarWrapper"; 
-import { FloatingChatWidget } from '@/components/FloatingChatWidget'; 
+import DesktopNavBarWrapper from "@/components/ui/DesktopNavBarWrapper";
+import { FloatingChatWidget } from "@/components/FloatingChatWidget";
 import Link from "next/link";
-import Image from "next/image"; 
+import Image from "next/image";
 
 const fontSans = FontSans({
   subsets: ["latin"],
@@ -34,31 +34,18 @@ export default function RootLayout({
       >
         {/* Header section */}
         <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-          <div className="container flex h-16 items-center justify-between"> 
+          <div className="container flex h-16 items-center justify-between">
             {/* Render NavBar Wrapper (will include EtherGuru link now) */}
             <div className="flex flex-1 items-center justify-center">
-              <DesktopNavBarWrapper>
-                <Link href="/" className="flex items-center gap-2" passHref>
-                  <Image
-                    src="/ether-guru.png"
-                    alt="Ether Guru Logo"
-                    width={32} 
-                    height={32}
-                    className="rounded-full" 
-                  />
-                  <span className="font-bold text-lg tracking-tight">
-                    ETHERGURU
-                  </span>
-                </Link>
-              </DesktopNavBarWrapper>
+              <DesktopNavBarWrapper />
             </div>
           </div>
         </header>
 
-        <div className="flex flex-1"> 
+        <div className="flex flex-1">
           <Sidebar />
           <main className="flex-1 overflow-y-auto">{children}</main>
-          <FloatingChatWidget /> 
+          <FloatingChatWidget />
         </div>
       </body>
     </html>

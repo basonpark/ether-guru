@@ -18,7 +18,7 @@ export default function SolidityChatPage() {
         />
         <h1 className="text-3xl font-bold mb-2">Solidity AI Assistant</h1>
         <p className="text-md text-muted-foreground">
-          Ask me anything about Solidity! I've been trained on the official
+          Ask me anything about Solidity! I&apos;ve been trained on the official
           v0.8.29 documentation. I can help explain concepts, find specific
           details, or discuss events, functions, and contracts.
         </p>

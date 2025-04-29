@@ -47,13 +47,20 @@ export function ChatInterface({ onExpand, onMinimize }: ChatInterfaceProps) {
   const [currentThinkingPhrase, setCurrentThinkingPhrase] = useState(
     thinkingPhrases[0]
   );
+  const [hasMounted, setHasMounted] = useState(false); // State to track client mount
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const thinkingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const typingIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
+  // --- Effect to set hasMounted after client mount ---
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
+
   // --- Effect for Initial Greeting ---
   useEffect(() => {
-    if (messages.length === 0) {
+    // Only run on client after mount and if messages are truly empty
+    if (hasMounted && messages.length === 0) { 
       const timer = setTimeout(() => {
         const initialMessage: ChatMessage = {
           sender: "bot",
@@ -69,7 +76,6 @@ export function ChatInterface({ onExpand, onMinimize }: ChatInterfaceProps) {
       }, 1000);
       return () => clearTimeout(timer);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Run only once on mount
 
   // --- Effect for Cycling Thinking Phrases ---
@@ -160,7 +166,7 @@ export function ChatInterface({ onExpand, onMinimize }: ChatInterfaceProps) {
         }
       }, TYPING_SPEED_MS);
     },
-    [scrollToBottom]
+    [scrollToBottom, setMessages] // Added setMessages
   ); // Include scrollToBottom in dependencies
 
   // Cleanup typing interval on unmount
@@ -173,23 +179,34 @@ export function ChatInterface({ onExpand, onMinimize }: ChatInterfaceProps) {
   }, []);
 
   // --- Send Message Handler ---
-  const handleSendMessage = async () => {
-    const userQuery = inputValue.trim();
-    if (!userQuery || isLoading) return;
+  const handleSendMessage = useCallback(async () => {
+    const trimmedInput = inputValue.trim();
+    if (!trimmedInput) return; // Only return if input is empty
 
-    // Clear any ongoing typing effect before sending new message
-    if (typingIntervalRef.current) {
-      clearInterval(typingIntervalRef.current);
-      typingIntervalRef.current = null;
-      // Ensure the last bot message is marked as not typing if interrupted
-      setMessages((prev) =>
-        prev.map((msg) =>
-          msg.sender === "bot" ? { ...msg, isTyping: false } : msg
-        )
-      );
+    // --- Clear Chat Command --- 
+    if (trimmedInput.toLowerCase() === 'clear') {
+      if (typingIntervalRef.current) {
+        clearInterval(typingIntervalRef.current);
+        typingIntervalRef.current = null;
+      }
+      if (thinkingIntervalRef.current) {
+        clearInterval(thinkingIntervalRef.current);
+        thinkingIntervalRef.current = null;
+      }
+      setMessages([]); // Clear messages state (and local storage via hook)
+      setInputValue(''); // Clear input field
+      setIsLoading(false); // Ensure loading state is reset
+      return; // Stop processing
     }
+    // --- End Clear Chat Command ---
 
-    const newUserMessage: ChatMessage = { sender: "user", text: userQuery };
+    // Prevent sending normal messages if loading or typing
+    if (isLoading || messages.some((m) => m.isTyping)) return;
+
+    const newUserMessage: ChatMessage = {
+      sender: "user",
+      text: trimmedInput,
+    };
     setMessages((prevMessages) => [...prevMessages, newUserMessage]);
     setInputValue("");
     setIsLoading(true);
@@ -198,7 +215,7 @@ export function ChatInterface({ onExpand, onMinimize }: ChatInterfaceProps) {
       const response = await fetch("/api/query-docs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query: userQuery }),
+        body: JSON.stringify({ query: trimmedInput }),
       });
 
       setIsLoading(false); // Stop loading indicator earlier
@@ -237,7 +254,7 @@ export function ChatInterface({ onExpand, onMinimize }: ChatInterfaceProps) {
       startTypingEffect(errorMessage, errorText, errorIndex);
     }
     // Removed finally block as isLoading is handled within try/catch
-  };
+  }, [inputValue, messages, isLoading, setMessages, startTypingEffect]); // Added setMessages and startTypingEffect
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(event.target.value);
@@ -270,7 +287,8 @@ export function ChatInterface({ onExpand, onMinimize }: ChatInterfaceProps) {
       <CardContent className="flex-grow overflow-hidden">
         <ScrollArea className="h-full pr-4" ref={scrollAreaRef}>
           <div className="space-y-4">
-            {messages.map((message, index) => (
+            {/* Only render messages after client has mounted */}
+            {hasMounted && messages.map((message, index) => (
               <motion.div
                 key={index}
                 className={`flex items-start gap-3 ${
@@ -295,9 +313,9 @@ export function ChatInterface({ onExpand, onMinimize }: ChatInterfaceProps) {
                 >
                   {message.sender === "bot" ? (
                     // Conditionally add cursor if typing
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    (<ReactMarkdown remarkPlugins={[remarkGfm]}>
                       {message.text + (message.isTyping ? "▍" : "")}
-                    </ReactMarkdown>
+                    </ReactMarkdown>)
                   ) : (
                     <span className="whitespace-pre-wrap">{message.text}</span>
                   )}
@@ -310,7 +328,8 @@ export function ChatInterface({ onExpand, onMinimize }: ChatInterfaceProps) {
               </motion.div>
             ))}
             {/* Dynamic Thinking Indicator */}
-            {isLoading && (
+            {/* Also check hasMounted here if it depends on messages state indirectly */}
+            {hasMounted && isLoading && (
               <motion.div
                 className="flex items-start gap-3"
                 initial={{ opacity: 0, y: 10 }}

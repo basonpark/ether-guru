@@ -126,7 +126,7 @@ export function BackgroundPaths({
                         dark:from-white/10 dark:to-black/10 p-px rounded-2xl backdrop-blur-lg 
                         overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300"
           >
-            <Link href="/challenges/fallback" passHref legacyBehavior>
+            <Link href="/challenges/fallback">
               <Button
                 asChild // Important: Tells Button to render the Link's <a> tag
                 variant="ghost"
@@ -136,7 +136,7 @@ export function BackgroundPaths({
                             group-hover:-translate-y-0.5 border border-black/10 dark:border-white/10
                             hover:shadow-md dark:hover:shadow-neutral-800/50"
               >
-                <a>
+                <span className="flex items-center">
                   <span className="opacity-90 group-hover:opacity-100 transition-opacity">
                     Start Hacking
                   </span>
@@ -146,7 +146,7 @@ export function BackgroundPaths({
                   >
                     →
                   </span>
-                </a>
+                </span>
               </Button>
             </Link>
           </div>

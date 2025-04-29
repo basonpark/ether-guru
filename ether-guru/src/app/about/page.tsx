@@ -140,6 +140,7 @@ const learningResources = [
 export default function AboutPage() {
   return (
     // Outer div for full-width background
+    // End Outer Background Div
     <div className="min-h-screen w-full bg-gradient-to-br from-slate-600 to-slate-950 py-12">
       {/* Inner container for content */}
       <div className="container mx-auto px-4 max-w-4xl">
@@ -197,7 +198,7 @@ export default function AboutPage() {
                   <p>
                     Perhaps the most infamous hack, exploiting a{" "}
                     <strong>recursive call vulnerability (reentrancy)</strong>{" "}
-                    in The DAO's code. Attackers drained roughly 3.6 million
+                    in The DAO&apos;s code. Attackers drained roughly 3.6 million
                     ETH, leading to a controversial hard fork of Ethereum and
                     the creation of Ethereum Classic.
                   </p>
@@ -240,7 +241,7 @@ export default function AboutPage() {
                     Badger DAO website, injecting malicious scripts that
                     prompted users to approve{" "}
                     <strong>excessive token allowances</strong> to the
-                    attacker's address, leading to over $120 million stolen.
+                    attacker&apos;s address, leading to over $120 million stolen.
                   </p>
                   <p>
                     Lesson: Smart contract security extends beyond the
@@ -302,7 +303,7 @@ export default function AboutPage() {
                     Badger DAO website, injecting malicious scripts that
                     prompted users to approve{" "}
                     <strong>excessive token allowances</strong> to the
-                    attacker's address, leading to over $120 million stolen.
+                    attacker&apos;s address, leading to over $120 million stolen.
                   </p>
                   <p>
                     Lesson: Smart contract security extends beyond the
@@ -337,22 +338,37 @@ export default function AboutPage() {
                 <AccordionTrigger>Wormhole Bridge Hack (2022)</AccordionTrigger>
                 <AccordionContent className="prose dark:prose-invert max-w-none prose-p:text-slate-700 dark:prose-p:text-slate-300 prose-p:mb-4">
                   <p>
-                    Exploited a <strong>signature verification vulnerability</strong> in the bridge logic, allowing the attacker to mint 120k wETH (worth ~$325 million) without depositing equivalent collateral.
+                    Exploited a{" "}
+                    <strong>signature verification vulnerability</strong> in the
+                    bridge logic, allowing the attacker to mint 120k wETH (worth
+                    ~$325 million) without depositing equivalent collateral.
                   </p>
                   <p>
-                    Lesson: Cross-chain <strong>bridge security</strong> is highly complex. Rigorous verification of cryptographic signatures, input validation, and logic across different chains is paramount. Audits are crucial.
+                    Lesson: Cross-chain <strong>bridge security</strong> is
+                    highly complex. Rigorous verification of cryptographic
+                    signatures, input validation, and logic across different
+                    chains is paramount. Audits are crucial.
                   </p>
                 </AccordionContent>
               </AccordionItem>
               {/* Beanstalk Farms Flash Loan Attack */}
               <AccordionItem value="beanstalk">
-                <AccordionTrigger>Beanstalk Farms Flash Loan Attack (2022)</AccordionTrigger>
+                <AccordionTrigger>
+                  Beanstalk Farms Flash Loan Attack (2022)
+                </AccordionTrigger>
                 <AccordionContent className="prose dark:prose-invert max-w-none prose-p:text-slate-700 dark:prose-p:text-slate-300 prose-p:mb-4">
                   <p>
-                    An attacker used a <strong>flash loan</strong> to acquire massive voting power in the Beanstalk Farms <strong>governance protocol</strong>, then proposed and instantly passed a malicious proposal to transfer protocol funds ($182 million) to themselves.
+                    An attacker used a <strong>flash loan</strong> to acquire
+                    massive voting power in the Beanstalk Farms{" "}
+                    <strong>governance protocol</strong>, then proposed and
+                    instantly passed a malicious proposal to transfer protocol
+                    funds ($182 million) to themselves.
                   </p>
                   <p>
-                    Lesson: <strong>Governance mechanisms</strong> can be attack vectors. Consider time-locks for proposals, flash loan resistance for voting power calculation, and careful validation of proposal execution logic.
+                    Lesson: <strong>Governance mechanisms</strong> can be attack
+                    vectors. Consider time-locks for proposals, flash loan
+                    resistance for voting power calculation, and careful
+                    validation of proposal execution logic.
                   </p>
                 </AccordionContent>
               </AccordionItem>
@@ -389,9 +405,9 @@ export default function AboutPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="text-sm text-slate-600 dark:text-slate-400">
-                  Focus on grasping the 'why' behind vulnerabilities, not just
-                  the 'how' of exploitation. Analyze the root causes and
-                  potential impacts.
+                  Focus on grasping the &apos;why&apos; behind vulnerabilities,
+                  not just the &apos;how&apos; of exploitation. Analyze the root
+                  causes and potential impacts.
                 </CardContent>
               </Card>
               {/* Card 2: Clear Explanation */}
@@ -478,6 +494,6 @@ export default function AboutPage() {
         </Card>
       </div>{" "}
       {/* End Inner Container */}
-    </div> // End Outer Background Div
+    </div>
   );
 }
