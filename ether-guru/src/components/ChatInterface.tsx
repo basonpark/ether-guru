@@ -70,13 +70,13 @@ export function ChatInterface({ onExpand, onMinimize }: ChatInterfaceProps) {
         setMessages([initialMessage]);
         startTypingEffect(
           initialMessage,
-          "Ask me anything! My answers are pretty solid 😉",
+          "What would you like to know about Solidity?", // Updated initial message
           0
         );
-      }, 1000);
+      }, 500); // Slightly shorter delay before initial message appears
       return () => clearTimeout(timer);
     }
-  }, []); // Run only once on mount
+  }, [hasMounted]); // Depend only on hasMounted to ensure it runs once correctly
 
   // --- Effect for Cycling Thinking Phrases ---
   useEffect(() => {
@@ -305,7 +305,7 @@ export function ChatInterface({ onExpand, onMinimize }: ChatInterfaceProps) {
                   </Avatar>
                 )}
                 <div
-                  className={`rounded-lg px-3 py-2 max-w-[85%] shadow-md ${
+                  className={`rounded-lg px-3 py-2 max-w-[85%] shadow-md overflow-wrap-anywhere break-words ${ // Added overflow-wrap-anywhere and break-words
                     message.sender === "user"
                       ? "bg-slate-600 text-white"
                       : "bg-gray-100 dark:bg-gray-800 prose prose-sm dark:prose-invert max-w-none"

@@ -23,9 +23,8 @@ import {
   Zap,
   BookOpenText,
   Code,
-} from "lucide-react"; // Import icon for links
+} from "lucide-react";
 
-// Define resources for cleaner mapping
 const learningResources = [
   {
     title: "Ethernaut (OpenZeppelin)",
@@ -139,17 +138,12 @@ const learningResources = [
 
 export default function AboutPage() {
   return (
-    // Outer div for full-width background
-    // End Outer Background Div
     <div className="min-h-screen w-full bg-gradient-to-br from-slate-600 to-slate-950 py-12">
-      {/* Inner container for content */}
-      <div className="container mx-auto px-4 max-w-4xl">
-        {/* Title */}
+      <div className="container mx-auto px-4 max-w-4xl font-figtree">
         <h1 className="text-4xl font-bold mb-10 text-left bg-gradient-to-r from-blue-100 to-purple-500 text-transparent bg-clip-text">
           About EtherGuru
         </h1>
 
-        {/* Section: Why Security Matters */}
         <Card className="mb-8 bg-white dark:bg-slate-900/80 backdrop-blur-sm border-slate-200 dark:border-slate-700/60 shadow-xl">
           <CardHeader>
             <CardTitle>Why Smart Contract Security Matters</CardTitle>
@@ -179,7 +173,6 @@ export default function AboutPage() {
           </CardContent>
         </Card>
 
-        {/* Section: Historical Hacks */}
         <Card className="mb-8 bg-white dark:bg-slate-900/80 backdrop-blur-sm border-slate-200 dark:border-slate-700/60 shadow-xl">
           <CardHeader>
             <CardTitle>A History of Notable Smart Contract Hacks</CardTitle>
@@ -191,7 +184,6 @@ export default function AboutPage() {
               each offering valuable lessons. Here are some key examples:
             </p>
             <Accordion type="single" collapsible className="w-full">
-              {/* DAO Hack */}
               <AccordionItem value="dao">
                 <AccordionTrigger>The DAO Hack (2016)</AccordionTrigger>
                 <AccordionContent className="prose dark:prose-invert max-w-none prose-p:text-slate-700 dark:prose-p:text-slate-300 prose-p:mb-4 prose-a:text-primary hover:prose-a:text-primary/80">
@@ -211,7 +203,6 @@ export default function AboutPage() {
                   </p>
                 </AccordionContent>
               </AccordionItem>
-              {/* Parity Hack 1 */}
               <AccordionItem value="parity1">
                 <AccordionTrigger>
                   Parity Multisig Wallet Hack 1 (July 2017)
@@ -230,7 +221,6 @@ export default function AboutPage() {
                   </p>
                 </AccordionContent>
               </AccordionItem>
-              {/* Parity Hack 2 */}
               <AccordionItem value="parity2">
                 <AccordionTrigger>
                   Parity Multisig Wallet Freeze (November 2017)
@@ -251,7 +241,6 @@ export default function AboutPage() {
                   </p>
                 </AccordionContent>
               </AccordionItem>
-              {/* bZx Attacks */}
               <AccordionItem value="bzx">
                 <AccordionTrigger>
                   bZx Flash Loan Attacks (2020)
@@ -272,7 +261,6 @@ export default function AboutPage() {
                   </p>
                 </AccordionContent>
               </AccordionItem>
-              {/* Cream Finance */}
               <AccordionItem value="cream">
                 <AccordionTrigger>
                   Cream Finance Exploits (2021)
@@ -292,7 +280,6 @@ export default function AboutPage() {
                   </p>
                 </AccordionContent>
               </AccordionItem>
-              {/* Badger DAO */}
               <AccordionItem value="badger">
                 <AccordionTrigger>
                   Badger DAO Frontend Attack (2021)
@@ -313,7 +300,6 @@ export default function AboutPage() {
                   </p>
                 </AccordionContent>
               </AccordionItem>
-              {/* Ronin Bridge */}
               <AccordionItem value="ronin">
                 <AccordionTrigger>Ronin Bridge Hack (2022)</AccordionTrigger>
                 <AccordionContent className="prose dark:prose-invert max-w-none prose-p:text-slate-700 dark:prose-p:text-slate-300 prose-p:mb-4 prose-a:text-primary hover:prose-a:text-primary/80">
@@ -333,7 +319,6 @@ export default function AboutPage() {
                   </p>
                 </AccordionContent>
               </AccordionItem>
-              {/* Wormhole Bridge Hack */}
               <AccordionItem value="wormhole">
                 <AccordionTrigger>Wormhole Bridge Hack (2022)</AccordionTrigger>
                 <AccordionContent className="prose dark:prose-invert max-w-none prose-p:text-slate-700 dark:prose-p:text-slate-300 prose-p:mb-4">
@@ -351,7 +336,6 @@ export default function AboutPage() {
                   </p>
                 </AccordionContent>
               </AccordionItem>
-              {/* Beanstalk Farms Flash Loan Attack */}
               <AccordionItem value="beanstalk">
                 <AccordionTrigger>
                   Beanstalk Farms Flash Loan Attack (2022)
@@ -381,7 +365,6 @@ export default function AboutPage() {
           </CardContent>
         </Card>
 
-        {/* Section: EtherGuru Approach */}
         <Card className="mb-8 bg-white dark:bg-slate-900/80 backdrop-blur-sm border-slate-200 dark:border-slate-700/60 shadow-xl">
           <CardHeader>
             <CardTitle>The EtherGuru Approach</CardTitle>
@@ -396,7 +379,6 @@ export default function AboutPage() {
               comprehension and retention.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* Card 1: Deep Understanding */}
               <Card className="bg-slate-50/50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700/50">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -410,7 +392,6 @@ export default function AboutPage() {
                   causes and potential impacts.
                 </CardContent>
               </Card>
-              {/* Card 2: Clear Explanation */}
               <Card className="bg-slate-50/50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700/50">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -424,7 +405,6 @@ export default function AboutPage() {
                   knowledge by teaching it.
                 </CardContent>
               </Card>
-              {/* Card 3: Active Learning */}
               <Card className="bg-slate-50/50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700/50">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -442,7 +422,6 @@ export default function AboutPage() {
           </CardContent>
         </Card>
 
-        {/* Section: Learning Resources */}
         <Card className="bg-white dark:bg-slate-900/80 backdrop-blur-sm border-slate-200 dark:border-slate-700/60 shadow-xl">
           <CardHeader>
             <CardTitle>Further Learning Resources</CardTitle>
@@ -454,7 +433,6 @@ export default function AboutPage() {
               blockchain security. Here are some excellent resources to deepen
               your understanding:
             </p>
-            {/* Grid for Resource Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
               {learningResources.map((resource) => (
                 <Link
@@ -492,8 +470,7 @@ export default function AboutPage() {
             </p>
           </CardContent>
         </Card>
-      </div>{" "}
-      {/* End Inner Container */}
+      </div>
     </div>
   );
 }

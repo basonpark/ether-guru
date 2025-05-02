@@ -110,8 +110,6 @@ export default function Home() {
                     className={`block border rounded-lg p-4 hover:bg-accent hover:text-accent-foreground transition-all duration-300 text-left shadow-md hover:shadow-lg hover:-translate-y-1 ${difficultyStyles.cardBg}`}
                   >
                     <div className="flex items-center">
-                      {/* Main flex container */}
-                      {/* Icon Container */}
                       <div
                         className={`rounded-full p-2 mr-3 flex-shrink-0 ${difficultyStyles.iconBg}`}
                       >
@@ -121,7 +119,6 @@ export default function Home() {
                           />
                         )}
                       </div>
-                      {/* Text Container */}
                       <div>
                         <h3 className="text-lg font-medium truncate">
                           {challenge.name}

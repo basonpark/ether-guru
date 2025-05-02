@@ -1,10 +1,9 @@
 // src/app/api/evaluate-explanation/route.ts
-import { NextRequest, NextResponse } from 'next/server'; // Use NextRequest
+import { NextRequest, NextResponse } from 'next/server';
 import { RateLimiterMemory } from 'rate-limiter-flexible';
 import OpenAI from 'openai';
-import { getChallengeBySlug } from '@/lib/challenges'; // Assuming correct path alias
+import { getChallengeBySlug } from '@/lib/challenges';
 
-// Ensure the API key is available
 if (!process.env.OPENAI_API_KEY) {
   throw new Error("Missing OpenAI API Key - make sure OPENAI_API_KEY is set in your .env file");
 }
@@ -13,24 +12,23 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-// Initialize rate limiter (3 requests per 5 minutes per IP)
+// Initialize rate limiter (3 requests per 10 minutes per IP)
 const rateLimiter = new RateLimiterMemory({
   points: 3, // Number of points
-  duration: 10 * 60, // Per 5 minutes (in seconds)
+  duration: 10 * 60, // Per 10 minutes (in seconds)
 });
 
-export async function POST(request: NextRequest) { // Use NextRequest type
+export async function POST(request: NextRequest) {
   // Get IP address from request headers
-  const forwardedFor = request.headers.get('x-forwarded-for'); // Use request.headers
-  const realIp = request.headers.get('x-real-ip'); // Use request.headers
+  const forwardedFor = request.headers.get('x-forwarded-for');
+  const realIp = request.headers.get('x-real-ip');
   // Use x-forwarded-for (common proxy header), fallback to x-real-ip
-  const ip = forwardedFor ? forwardedFor.split(',')[0].trim() : realIp || 'unknown'; 
+  const ip = forwardedFor ? forwardedFor.split(',')[0].trim() : realIp || 'unknown';
 
   try {
     // Consume 1 point per request for the IP address
     await rateLimiter.consume(ip);
 
-    // --- Original logic wrapped in a try block ---
     try {
       const { userExplanation, challengeSlug } = await request.json();
 
@@ -49,74 +47,77 @@ export async function POST(request: NextRequest) { // Use NextRequest type
 
       // --- Construct the Prompt for OpenAI ---
       const prompt = `
-You are an expert Ethereum security auditor evaluating explanations for Ethernaut challenges.
-The user is attempting the '${challengeName}' challenge.
+You are an expert smart contract security auditor reviewing a user's explanation of a specific vulnerability.
 
-Official Explanation for ${challengeName}:
----
+Challenge Name: ${challengeName}
+
+Official Explanation (for context, do not simply copy it):
 ${officialExplanation}
----
 
 User's Explanation:
----
 ${userExplanation}
----
 
-Evaluate the user's explanation based *only* on its relevance, accuracy, and completeness in explaining the vulnerability and exploit steps for the '${challengeName}' challenge, compared to the official explanation provided above.
+Task:
+Evaluate the user's explanation based ONLY on the provided user explanation and the official explanation context. Assess how well the user understands the *core concepts* of the vulnerability described in the official explanation, the potential *impact*, and any relevant *mitigation* strategies mentioned or implied.
 
-Provide your evaluation in the following JSON format, and nothing else:
+Instructions:
+1.  **Compare Core Concepts:** Does the user accurately identify the main vulnerability type (e.g., reentrancy, integer overflow, access control issue)? Do they explain *why* it's a vulnerability in this context?
+2.  **Assess Impact Understanding:** Does the user grasp the potential consequences of the vulnerability (e.g., loss of funds, denial of service, unauthorized actions)?
+3.  **Evaluate Mitigation Awareness:** Does the user mention or allude to correct ways to prevent or fix the vulnerability (even if not explicitly asked for)?
+4.  **Clarity and Accuracy:** Is the explanation clear, concise, and technically accurate? Avoid penalizing minor grammatical errors if the meaning is clear.
+5.  **Scoring (0-10):** Assign a score based on the following criteria:
+    *   0-2: Completely incorrect or irrelevant explanation.
+    *   3-4: Shows minimal understanding, misses key concepts.
+    *   5-6: Grasps some basic concepts but has significant gaps or inaccuracies.
+    *   7-8: Good understanding of core concepts and impact, minor inaccuracies or omissions allowed.
+    *   9-10: Excellent, accurate, and comprehensive understanding of the vulnerability, impact, and potentially mitigation.
+6.  **Feedback:** Provide brief, constructive feedback (2-3 sentences max). Highlight strengths and specific areas for improvement. Be encouraging.
+
+Output Format: Respond ONLY with a valid JSON object containing 'score' (integer 0-10) and 'feedback' (string).
+Example:
 {
-  "score": <integer score between 0 and 10>,
-  "feedback": "<string feedback>"
+  "score": 8,
+  "feedback": "Good grasp of the reentrancy vulnerability and its potential for draining funds. Consider mentioning the checks-effects-interactions pattern for mitigation."
 }
-
-Rules for Evaluation:
-- Score 10: Perfect explanation, covers all key points accurately. Feedback should be positive encouragement (e.g., "Excellent work! Your explanation is spot on.").
-- Score 7-9: Mostly correct, might miss minor details or clarity. Feedback should point out small gaps and suggest minor improvements based on the official explanation.
-- Score 0-6: Significant inaccuracies, missing core concepts, or irrelevant information. Feedback MUST provide specific, actionable hints pointing directly to the weaknesses in the user's explanation and guiding them towards the concepts in the official explanation they missed. Be specific about *what* they missed or got wrong. Do not reveal the full solution, but guide them clearly.
-- Base the score solely on the comparison to the provided official explanation for *this specific challenge*. Ignore formatting or grammar unless it significantly hinders understanding.
-- Ensure the feedback is constructive and helpful, especially for lower scores.
 `;
 
       // --- Call OpenAI API ---
-      console.log(`Calling OpenAI for challenge: ${challengeName}, IP: ${ip}`); // Log IP
+      console.log(`Calling OpenAI for evaluation... (Challenge: ${challengeSlug}, IP: ${ip})`); // Log IP
       const completion = await openai.chat.completions.create({
-        model: 'gpt-4o-mini', // Using a cost-effective but capable model
-        messages: [
-          { role: 'system', content: 'You are an expert Ethereum security auditor evaluating explanations for Ethernaut challenges. Respond ONLY in the requested JSON format.' },
-          { role: 'user', content: prompt }
-        ],
+        model: "gpt-4o", // Use the newer model if available
+        messages: [{ role: "user", content: prompt }],
+        temperature: 0.3, // Lower temperature for more deterministic evaluation
+        max_tokens: 200, // Limit response size
         response_format: { type: "json_object" }, // Request JSON output
-        temperature: 0.2, // Low temperature for consistent scoring
-        max_tokens: 300, // Limit response length
       });
 
-      console.log(`OpenAI response received for IP: ${ip}`); // Log IP
-
-      // --- Parse Response ---
       const content = completion.choices[0]?.message?.content;
-      if (!content) {
-        throw new Error("OpenAI returned empty content");
-      }
 
-      let score: number | null = null;
-      let feedback: string | null = null;
+      // --- Parse OpenAI Response (with fallback) ---
+      let score: number = 0;
+      let feedback: string = "Could not evaluate explanation.";
 
       try {
-        const result = JSON.parse(content);
-        score = typeof result.score === 'number' ? Math.max(0, Math.min(10, result.score)) : null; // Clamp score 0-10
-        feedback = typeof result.feedback === 'string' ? result.feedback : 'Could not parse feedback.';
+        if (!content) {
+          throw new Error("No content received from OpenAI");
+        }
 
-        if (score === null || feedback === null) {
-          console.error("Failed to parse score or feedback from OpenAI JSON:", content);
-          throw new Error("Invalid JSON structure from OpenAI");
+        console.log("Raw OpenAI Response:", content); // Log raw response for debugging
+
+        const result = JSON.parse(content);
+        if (typeof result.score === 'number' && typeof result.feedback === 'string') {
+          score = Math.max(0, Math.min(10, Math.round(result.score))); // Clamp score between 0-10 and round
+          feedback = result.feedback;
+        } else {
+          console.error("Invalid JSON structure from OpenAI", result);
+          throw new Error("Unexpected JSON structure from OpenAI");
         }
       } catch (parseError) {
         console.error("Error parsing OpenAI JSON response:", parseError);
         console.error("Raw OpenAI content:", content);
         // Attempt to extract score/feedback manually as fallback (less reliable)
-        const scoreMatch = content.match(/"score":\s*(\d+)/);
-        const feedbackMatch = content.match(/"feedback":\s*"([^"]*)"/);
+        const scoreMatch = content?.match(/"score":\s*(\d+)/);
+        const feedbackMatch = content?.match(/"feedback":\s*"([^"]*)"/);
         score = scoreMatch ? parseInt(scoreMatch[1], 10) : 0;
         feedback = feedbackMatch ? feedbackMatch[1] : "Error processing evaluation. Please try again.";
         score = Math.max(0, Math.min(10, score)); // Clamp again
@@ -131,7 +132,6 @@ Rules for Evaluation:
       console.error(`Error processing request for IP: ${ip}:`, error); // Log IP in error
       return NextResponse.json({ error: 'Failed to evaluate explanation. Please try again later.' }, { status: 500 });
     }
-    // --- End of original logic try block ---
 
   } catch (rateLimitError: unknown) {
     // Rate limiter failed (likely limit exceeded)
@@ -152,9 +152,3 @@ Rules for Evaluation:
     return NextResponse.json({ error: 'Too Many Requests' }, { status: 429 });
   }
 }
-
-// Optional: Add type safety for the request body if needed
-// interface EvaluateRequestBody {
-//   userExplanation: string;
-//   challengeSlug: string;
-// }

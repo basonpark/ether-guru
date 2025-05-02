@@ -18,7 +18,7 @@ import {
 
 export default function HackathonsPage() {
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-slate-100 to-slate-700 py-20">
+    <div className="min-h-screen w-full bg-gradient-to-br from-slate-100 to-slate-700 py-20 font-figtree">
       <div className="shadow-amber-50 hover:shadow-sm transition-all duration-300 rounded-2xl max-w-4xl container mx-auto px-6 py-16 md:px-6 lg:px-16 lg:py-20 bg-gradient-to-br from-slate-50 to-slate-200 dark:bg-gradient-to-br dark:from-slate-950 dark:to-slate-800">
         <header className="mb-12 text-center max-w-3xl mx-auto">
           <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100 sm:text-5xl md:text-6xl mb-4">

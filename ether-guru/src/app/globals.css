@@ -50,7 +50,7 @@
 
 :root {
   --radius: 0.625rem;
-  --header-height: 4rem; /* Define header height (h-16 = 4rem) */
+  --header-height: 4rem; 
   --background: oklch(1 0 0);
   --foreground: oklch(0.147 0.004 49.25);
   --card: oklch(1 0 0);
@@ -123,6 +123,39 @@
   --sidebar-ring: oklch(0.553 0.013 58.071);
 }
 
+/* Add Figtree font */
+@font-face {
+  font-family: 'Figtree';
+  src: url('/fonts/Figtree/Figtree-Regular.woff2') format('woff2'); 
+  font-weight: 400; 
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Figtree';
+  src: url('/fonts/Figtree/Figtree-SemiBold.woff2') format('woff2'); 
+  font-weight: 600; 
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Figtree';
+  src: url('/fonts/Figtree/Figtree-Bold.woff2') format('woff2'); 
+  font-weight: 700; 
+  font-style: normal;
+  font-display: swap;
+}
+
+@tailwind utilities;
+
+@layer utilities {
+  .font-figtree {
+    font-family: 'Figtree', sans-serif; 
+  }
+}
+
 @layer base {
   html,
   body {
@@ -138,39 +171,39 @@
 
 /* Custom Scrollbar Styling for Code Snippets */
 .code-scrollbar-wrapper::-webkit-scrollbar {
-  width: 8px; /* Width of the scrollbar */
+  width: 8px; 
 }
 
 .code-scrollbar-wrapper::-webkit-scrollbar-track {
-  background: #f1f1f1; /* Light gray track */
+  background: #f1f1f1; 
   border-radius: 10px;
 }
 .dark .code-scrollbar-wrapper::-webkit-scrollbar-track {
-  background: #2d3748; /* Darker gray track for dark mode */
+  background: #2d3748; 
 }
 
 .code-scrollbar-wrapper::-webkit-scrollbar-thumb {
-  background: #c1c1c1; /* Slightly darker gray thumb */
+  background: #c1c1c1; 
   border-radius: 10px;
 }
 .dark .code-scrollbar-wrapper::-webkit-scrollbar-thumb {
-  background: #718096; /* Lighter gray thumb for dark mode */
+  background: #718096; 
 }
 
 .code-scrollbar-wrapper::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8; /* Darker thumb on hover */
+  background: #a8a8a8; 
 }
 .dark .code-scrollbar-wrapper::-webkit-scrollbar-thumb:hover {
-  background: #a0aec0; /* Slightly lighter thumb on hover for dark mode */
+  background: #a0aec0; 
 }
 
 /* Firefox Scrollbar Styling */
 .code-scrollbar-wrapper {
-  scrollbar-width: thin; /* "auto" or "thin" */
-  scrollbar-color: #c1c1c1 #f1f1f1; /* thumb track */
+  scrollbar-width: thin; 
+  scrollbar-color: #c1c1c1 #f1f1f1; 
 }
 .dark .code-scrollbar-wrapper {
-  scrollbar-color: #718096 #2d3748; /* thumb track for dark mode */
+  scrollbar-color: #718096 #2d3748; 
 }
 
 /* Rainbow Button Animation */

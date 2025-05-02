@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { OpenAI } from 'openai';
 
-// Initialize Supabase client
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 if (!supabaseUrl || !supabaseKey) {
@@ -10,7 +9,6 @@ if (!supabaseUrl || !supabaseKey) {
 }
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-// Initialize OpenAI client
 const openaiApiKey = process.env.OPENAI_API_KEY!;
 if (!openaiApiKey) {
   throw new Error('Missing OpenAI API key environment variable');
@@ -35,7 +33,6 @@ async function fetchRawChunks() {
   const { data, error } = await supabase
     .from('raw_chunks')
     .select('id, content') // Select only needed columns
-    // Potential Optimization: Add '.eq('is_processed', false)' if using a flag
     .order('id'); // Process in a consistent order
 
   if (error) {
@@ -51,30 +48,36 @@ async function fetchRawChunks() {
  */
 async function generateEmbeddings(chunks: { id: number; content: string }[]): Promise<{ raw_chunk_id: number; content: string; embedding: number[] }[]> {
   const embeddingsData: { raw_chunk_id: number; content: string; embedding: number[] }[] = [];
-  console.log(`Generating embeddings for ${chunks.length} chunks...`);
 
+  // Process chunks in batches to avoid hitting OpenAI API limits
   for (let i = 0; i < chunks.length; i += EMBEDDING_BATCH_SIZE) {
     const batchChunks = chunks.slice(i, i + EMBEDDING_BATCH_SIZE);
-    const batchTexts = batchChunks.map(chunk => chunk.content);
+    const batchNumber = Math.floor(i / EMBEDDING_BATCH_SIZE) + 1;
+    const totalBatches = Math.ceil(chunks.length / EMBEDDING_BATCH_SIZE);
+
+    console.log(`Processing embedding batch ${batchNumber} of ${totalBatches}...`);
+
+    // Clean up newlines for embedding
+    const inputs = batchChunks.map(chunk => chunk.content.replace(/\n/g, ' '));
 
     try {
-      if (batchTexts.length === 0) continue;
-
-      console.log(` - Processing embedding batch ${Math.floor(i / EMBEDDING_BATCH_SIZE) + 1}...`);
-      const response = await openai.embeddings.create({
+      const embeddingResponse = await openai.embeddings.create({
         model: embeddingModel,
-        input: batchTexts,
+        input: inputs,
         dimensions: embeddingDimension,
       });
 
-      response.data.forEach((embeddingResult, index) => {
-        const originalChunk = batchChunks[index];
+      const batchEmbeddings = embeddingResponse.data;
+
+      for (let j = 0; j < batchChunks.length; j++) {
+        const chunk = batchChunks[j];
+        const embedding = batchEmbeddings[j];
         embeddingsData.push({
-          raw_chunk_id: originalChunk.id,
-          content: originalChunk.content, // Store content again in documents table
-          embedding: embeddingResult.embedding,
+          raw_chunk_id: chunk.id,
+          content: chunk.content, // Store content again in documents table
+          embedding: embedding.embedding,
         });
-      });
+      }
     } catch (error) {
       console.error(`Error generating embeddings for batch starting at index ${i}:`, error);
       // Continue to next batch if one fails
@@ -87,26 +90,33 @@ async function generateEmbeddings(chunks: { id: number; content: string }[]): Pr
 /**
  * Upserts embeddings into the 'documents' table.
  */
-async function storeEmbeddings(embeddingsToStore: { raw_chunk_id: number; content: string; embedding: number[] }[]) {
-  if (embeddingsToStore.length === 0) {
-    console.log('No new embeddings to store.');
-    return;
-  }
-  console.log(`Upserting ${embeddingsToStore.length} embeddings into 'documents' table...`);
+async function storeEmbeddings(embeddingsWithContent: { raw_chunk_id: number; content: string; embedding: number[] }[]) {
+  console.log(`Attempting to store ${embeddingsWithContent.length} embeddings...`);
 
-  for (let i = 0; i < embeddingsToStore.length; i += UPSERT_BATCH_SIZE) {
-    const batch = embeddingsToStore.slice(i, i + UPSERT_BATCH_SIZE);
+  // Upsert embeddings in batches to Supabase
+  for (let i = 0; i < embeddingsWithContent.length; i += UPSERT_BATCH_SIZE) {
+    const batch = embeddingsWithContent.slice(i, i + UPSERT_BATCH_SIZE);
+    const batchNumber = Math.floor(i / UPSERT_BATCH_SIZE) + 1;
+    const totalBatches = Math.ceil(embeddingsWithContent.length / UPSERT_BATCH_SIZE);
+    console.log(`Processing Supabase upsert batch ${batchNumber} of ${totalBatches}...`);
+
+    const batchData = batch.map(item => ({
+      raw_chunk_id: item.raw_chunk_id,
+      content: item.content,
+      embedding: item.embedding,
+    }));
+
     try {
-      const { error } = await supabase
+      const { error: upsertError } = await supabase
         .from('documents')
-        .upsert(batch, { onConflict: 'raw_chunk_id' }); // Upsert based on the raw_chunk_id
+        .upsert(batchData, { onConflict: 'raw_chunk_id' }); // Assuming raw_chunk_id is unique
 
-      if (error) {
-        console.error(`Supabase upsert error (Batch ${Math.floor(i / UPSERT_BATCH_SIZE) + 1}):`, error);
+      if (upsertError) {
+        console.error('Supabase upsert error:', upsertError);
         // Throw error to stop the process if a batch fails
-        throw new Error(`Supabase upsert failed: ${error.message}`);
+        throw new Error(`Supabase upsert failed: ${upsertError.message}`);
       }
-       console.log(` - Upserted batch ${Math.floor(i / UPSERT_BATCH_SIZE) + 1} (${batch.length} records)`);
+      console.log(` - Upserted batch ${batchNumber} (${batch.length} records)`);
     } catch (error) {
       console.error('Error during Supabase upsert processing:', error);
       // Re-throw error
@@ -122,17 +132,14 @@ export async function POST(req: NextRequest) {
   console.log('Received request to process raw chunks and generate embeddings...');
 
   try {
-    // 1. Fetch raw chunks from Supabase (output of Python script)
     const rawChunks = await fetchRawChunks();
 
     if (!rawChunks || rawChunks.length === 0) {
       return NextResponse.json({ message: 'No raw chunks found to process.' }, { status: 200 });
     }
 
-    // 2. Generate embeddings for the fetched chunks
     const embeddingsWithContent = await generateEmbeddings(rawChunks);
 
-    // 3. Store embeddings in the 'documents' table (using upsert)
     await storeEmbeddings(embeddingsWithContent);
 
     console.log('Embedding generation and storage process completed.');
@@ -155,9 +162,4 @@ export async function POST(req: NextRequest) {
       error: errorMessage
     }, { status: 500 });
   }
-}
-
-// Optionally, add a GET handler for testing or other purposes
-export async function GET(req: NextRequest) {
-    return NextResponse.json({ message: 'This endpoint expects a POST request with a URL to ingest.' });
 }
